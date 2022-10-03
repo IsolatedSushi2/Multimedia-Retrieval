@@ -22,7 +22,7 @@ ms = pymeshlab.MeshSet()
     # (b) if there are significant outliers from this average (e.g. shapes having many, or few, vertices or cells).
 # The best way to do this is to show a histogram counting how many shapes are in the database for every range of the property of interest (e.g., number of vertices, number of faces, shape class).
 
-# https://pymeshlab.readthedocs.io/en/0.1.5/classes/mesh.html
+# https://pymeshlab.readthedocs.io/en/latest/filter_list.html
 # For what a mesh all contains.
 
 
@@ -122,18 +122,22 @@ def remesh():
     vertices_after  = []
 
     for i in range(len(models)):
-        path = os.getcwd() + models[i][-1]
-        remeshpath = os.getcwd() + '\\2-3_remesh\\' + os.path.basename(models[i][-1])
+        model = models[i]
+
+        path = os.getcwd() + model[-1]
+        remeshpath = os.getcwd() + '\\2-3_remesh_targetlen\\' + os.path.basename(model[-1])
 
         ms.clear() # to make sure we don't apply the filter to all other meshes too
         ms.load_new_mesh(path)
         m = ms.current_mesh()
 
-        ms.apply_filter('meshing_isotropic_explicit_remeshing')
+        # if model[1] > 6000:
+        #     ms.apply_filter('meshing_decimation_clustering', threshold=pymeshlab.Percentage(1.5))
+        ms.apply_filter('meshing_isotropic_explicit_remeshing', iterations=3, targetlen=pymeshlab.Percentage(1.5))
         vertices_after.append(m.vertex_number())
         ms.save_current_mesh(remeshpath)
 
-        printeach = 40
+        printeach = 10
         if i % printeach == 0:
             print(f"First {i} done")
 
@@ -143,17 +147,30 @@ def remesh():
     # We can always make these histograms afterwards, without having to do this all again.
     # That's why we save the models! Just read them from file and print it. Way quicker.
 
-    # DECIMATING
 
-    # for i in range(0,20):
-    #     v = i/10
-    #     ms.clear()
-    #     ms.load_new_mesh(all_paths[0])
-    #     m = ms.current_mesh()
-    #     before = m.vertex_number()
-    #     ms.apply_filter('meshing_decimation_clustering', threshold=pymeshlab.Percentage(v))
-    #     after = m.vertex_number()
-    #     print(f"VERTEX FOR {v} THRESHOLD: {before} -> {after}")
+# TEMPORARY TRY FUNCTION, TRIES OUT MULTIPLE VALUES TO SEE WHICH ONE IS BEST
+def tryDecimate():
+
+    # DECIMATING
+    models = read_csv()
+    vertices_before = [row[1] for row in models]
+
+    for i in range(1,5):
+        vertices_after  = []
+
+        for model in models:
+            if model[1] > 6000: # only try decimate on > 6000 vertices
+                v = 1.5 + (1.5/5)*i # 0.3, 0.6, 0.9, 1.2, 1.5
+                ms.clear()
+                ms.load_new_mesh(os.getcwd() + model[-1])
+                m = ms.current_mesh()
+                # vertices_before.append(m.vertex_number())
+                ms.apply_filter('meshing_decimation_clustering', threshold=pymeshlab.Percentage(v))
+                vertices_after.append(m.vertex_number())
+
+        make_histogram(vertices_before, 'Vertices before decimation', 'Frequency')
+        make_histogram(vertices_after,  f'Vertices after decimation, threshold = {v}', 'Frequency')
+        
 
 
 
