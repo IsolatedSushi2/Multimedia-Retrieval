@@ -1,7 +1,7 @@
+import pymeshlab
 import matplotlib.pyplot as plt   # plots: for visualizing the data (e.g. histogram)
 import numpy as np
 import os                         # paths: for getting the files
-import pymeshlab
 ms = pymeshlab.MeshSet()
 
 
@@ -51,14 +51,13 @@ def plot_stats():
     # make_histogram(hist_face,'No. of edges','Frequency')  # UNCOMMENT TO PRINT TOO
 
 
-plot_stats()
+#plot_stats()
 
 
 
-quit() # Below here is just some previous test-code. Not important. "quit()" stops the code here.
 
 
-ms.load_new_mesh(base_path + r'\61.off')
+ms.load_new_mesh(base_path + r'/Airplane/61.off')
 # ms.generate_convex_hull()
 ms.apply_filter('convex_hull')
 ms.save_current_mesh('convex_hull.ply')
@@ -68,11 +67,11 @@ ms.save_current_mesh('convex_hull.ply')
 
 # load a new mesh in the MeshSet, and sets it as current mesh
 # the path of the mesh can be absolute or relative
-ms.load_new_mesh(base_path + r'\62.off')
+ms.load_new_mesh(base_path + r'/Airplane/62.off')
 print(ms.number_meshes())  # now ms contains 1 mesh
 
 # load a new mesh, and sets it as current mesh
-ms.load_new_mesh(base_path + r'\63.off')
+ms.load_new_mesh(base_path + r'/Airplane/63.off')
 print(ms.number_meshes())  # now ms contains 2 meshes
 
 # set the first mesh (id 0) as current mesh
