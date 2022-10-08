@@ -5,28 +5,71 @@ from pathlib import Path
 import random
 
 def processAllMeshes():
-    pathList = list(Path('./').rglob('*.off'))
+    pathList = list(Path('./labeledDb/labeledDB_new').rglob('*.off'))
+    print(pathList)
+    # while True:
+    #     random_path = random.choice(pathList)
+    #     processMesh(random_path)
 
-    while True:
-        random_path = random.choice(pathList)
-        processMesh(random_path)
+    for path in pathList:
+        processMesh(path)
 
 
 def processMesh(path):
     mesh = o3d.io.read_triangle_mesh(".\\" + str(path))
 
-    aligned_mesh = processRotation(mesh)
-    return
-    scaled_mesh = processScale(mesh)
-    translated_mesh = processTranslation(scaled_mesh)
+    translated_mesh = processTranslation(mesh)
+    aligned_mesh = processRotation(translated_mesh)
+    scaled_mesh = processScale(aligned_mesh)
 
 def processRotation(mesh):
     mesh_clone = copy.deepcopy(mesh)
     eigenvalues, eigenvectors = eigenValuesFromMesh(mesh_clone)
 
-    lineset = getEigenVectorLines(mesh_clone.get_center(), eigenvalues, eigenvectors)
-    o3d.visualization.draw_geometries([lineset, mesh_clone])
+    # Get the necessary indices
+    majorIndex = np.argmax(eigenvalues)
+    mediumIndex = (majorIndex + 1) % 3
 
+    #Get the necessary vectors
+    majorEigenVector = eigenvectors[majorIndex]
+    mediumEigenVector = eigenvectors[mediumIndex]
+    perpendicularEigenVector = np.cross(majorEigenVector, mediumEigenVector)
+
+    # Perform linear transformation
+    for i in range(len(mesh_clone.vertices)):
+        currVertex = mesh_clone.vertices[i]
+
+        newVertex = [0, 0, 0]
+        # In the rotation step, the mesh should already be translated to barycenter at the origin
+        newVertex[0] = np.dot(currVertex, majorEigenVector)
+        newVertex[1] = np.dot(currVertex, mediumEigenVector)
+        newVertex[2] = np.dot(currVertex, perpendicularEigenVector)
+
+        mesh_clone.vertices[i] = newVertex
+
+
+    xScale, yScale, zScale = getFlippingSign(mesh_clone)
+
+    print("flipping in xyz:", xScale, yScale, zScale)
+    for i in range(len(mesh_clone.vertices)):
+        mesh_clone.vertices[i][0] *= xScale
+        mesh_clone.vertices[i][1] *= yScale
+        mesh_clone.vertices[i][2] *= zScale
+
+    o3d.visualization.draw_geometries([mesh_clone])
+    return mesh_clone
+
+def getFlippingSign(mesh):
+    totals = [0, 0, 0]
+    vertices = mesh.vertices
+    for triangle in mesh.triangles:
+        triangleCenter = (vertices[triangle[0]] + vertices[triangle[1]] + vertices[triangle[2]]) / 3
+        
+        for i in range(3):
+            currVal = triangleCenter[i]
+            totals[i] += np.sign(currVal) * currVal * currVal
+
+    return np.sign(totals)
 
 def getEigenVectorLines(origin, eigenvalues, eigenvectors):
     scale = 10
