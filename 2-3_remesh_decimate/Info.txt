@@ -1,3 +1,0 @@
-Decimate from 6000+ vertices;
-Decimate percentage = 1.5;
-Remesh iterations = 3;

@@ -1,3 +1,0 @@
-No decimation.
-Remeshing, iterations = 3;
-targetlen = 1.5;
