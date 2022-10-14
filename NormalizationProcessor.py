@@ -4,9 +4,9 @@ import numpy as np
 from pathlib import Path
 import random
 
+
 def processAllMeshes():
     pathList = list(Path('./labeledDb/labeledDB_new').rglob('*.off'))
-    print(pathList)
     # while True:
     #     random_path = random.choice(pathList)
     #     processMesh(random_path)
@@ -20,21 +20,35 @@ def processMesh(path):
 
     translated_mesh = processTranslation(mesh)
     aligned_mesh = processRotation(translated_mesh)
-    scaled_mesh = processScale(aligned_mesh)
+    #scaled_mesh = processScale(aligned_mesh)
+
 
 def processRotation(mesh):
     mesh_clone = copy.deepcopy(mesh)
     eigenvalues, eigenvectors = eigenValuesFromMesh(mesh_clone)
+    
 
-    # Get the necessary indices
-    majorIndex = np.argmax(eigenvalues)
-    mediumIndex = (majorIndex + 1) % 3
 
-    #Get the necessary vectors
-    majorEigenVector = eigenvectors[majorIndex]
-    mediumEigenVector = eigenvectors[mediumIndex]
+    print(eigenvalues, eigenvectors)
+    # rotMatrix = np.array(eigenvectors)
+
+    # print("Rotation Matrix", rotMatrix)
+    # mesh_clone.rotate(rotMatrix, center=(0, 0, 0))
+
+    # for i in range(len(mesh_clone.vertices)):
+    #     mesh_clone.vertices[i] = np.dot(rotMatrix, mesh_clone.vertices[i]).T
+
+    # # Get the necessary indices
+    # majorIndex = np.argmax(eigenvalues)
+    # mediumIndex = (majorIndex + 1) % 3
+
+    # Get the necessary vectors
+    majorEigenVector = eigenvectors[0]
+    mediumEigenVector = eigenvectors[1]
     perpendicularEigenVector = np.cross(majorEigenVector, mediumEigenVector)
 
+    print("vectors", majorEigenVector, mediumEigenVector, perpendicularEigenVector)
+    print("values", eigenvalues[0], eigenvalues[1], eigenvalues[2])
     # Perform linear transformation
     for i in range(len(mesh_clone.vertices)):
         currVertex = mesh_clone.vertices[i]
@@ -47,71 +61,96 @@ def processRotation(mesh):
 
         mesh_clone.vertices[i] = newVertex
 
+    _val, _vec = eigenValuesFromMesh(mesh_clone)
+    #o3d.visualization.draw_geometries([mesh_clone, mesh.translate([5 ,0 ,0]) ,getEigenVectorLines(eigenvalues, eigenvectors).translate([5, 0 ,0]) ,getEigenVectorLines(_val, _vec)])
+
 
     xScale, yScale, zScale = getFlippingSign(mesh_clone)
 
     print("flipping in xyz:", xScale, yScale, zScale)
+
     for i in range(len(mesh_clone.vertices)):
         mesh_clone.vertices[i][0] *= xScale
         mesh_clone.vertices[i][1] *= yScale
         mesh_clone.vertices[i][2] *= zScale
 
-    o3d.visualization.draw_geometries([mesh_clone])
+    o3d.visualization.draw_geometries([mesh_clone, mesh.translate([5 ,0 ,0]) ,getEigenVectorLines(eigenvalues, eigenvectors).translate([5, 0 ,0]) ,getEigenVectorLines(_val, _vec)])
+
     return mesh_clone
+
 
 def getFlippingSign(mesh):
     totals = [0, 0, 0]
     vertices = mesh.vertices
     for triangle in mesh.triangles:
-        triangleCenter = (vertices[triangle[0]] + vertices[triangle[1]] + vertices[triangle[2]]) / 3
-        
+        triangleCenter = (
+            vertices[triangle[0]] + vertices[triangle[1]] + vertices[triangle[2]]) / 3
+
         for i in range(3):
             currVal = triangleCenter[i]
             totals[i] += np.sign(currVal) * currVal * currVal
 
     return np.sign(totals)
 
-def getEigenVectorLines(origin, eigenvalues, eigenvectors):
+
+def getEigenVectorLines(eigenvalues, eigenvectors):
     scale = 10
-    eigenvalues = eigenvalues * scale
 
     #points = np.array([origin, eigenvectors[0] * eigenvalues[0], eigenvectors[1] * eigenvalues[1], eigenvectors[2] * eigenvalues[2]])
-    points = np.array([eigenvectors[0] * eigenvalues[0], eigenvectors[1] * eigenvalues[1], eigenvectors[2] * eigenvalues[2], -eigenvectors[0] * eigenvalues[0], -eigenvectors[1] * eigenvalues[1], -eigenvectors[2] * eigenvalues[2]])
+
+    xVector = scale * eigenvectors[0] * eigenvalues[0]
+    yVector = scale * eigenvectors[1] * eigenvalues[1]
+    zVector = scale * eigenvectors[2] * eigenvalues[2]
+
+    points = np.array([xVector, yVector, zVector, -
+                      xVector, -yVector, -zVector])
     lines = [[0, 3], [1, 4], [2, 5]]
-    colors = [[1, 0, 0] for i in range(len(lines))]
-    line_set = o3d.geometry.LineSet()
-    line_set.points = o3d.utility.Vector3dVector(points)
-    line_set.lines = o3d.utility.Vector2iVector(lines)
+    colors = [[1, 0 ,0], [0, 1 ,0], [0, 0 ,1]]
+    line_set = o3d.geometry.LineSet(points=o3d.utility.Vector3dVector(
+        points), lines=o3d.utility.Vector2iVector(lines))
     line_set.colors = o3d.utility.Vector3dVector(colors)
-    
+
     return line_set
 
 
 def eigenValuesFromMesh(mesh):
-    print(dir(mesh.vertices))
-    
     vertices = np.asarray(mesh.vertices).T
-
-    pcd = mesh.sample_points_poisson_disk(1000)
-    print(np.asarray(pcd.points).shape)
-    mean, cov_matrix = pcd.compute_mean_and_covariance()
-    # cov_matrix = np.cov(vertices)
-    cov_matrix = np.cov(np.asarray(pcd.points).T)
+    cov_matrix = np.cov(vertices)
     eigenvalues, eigenvectors = np.linalg.eig(cov_matrix)
-    print(eigenvalues, eigenvectors)
+
+    eigenComponents = list(zip(eigenvalues, eigenvectors.T))
+    eigenComponents.sort(key=lambda x: x[0], reverse=True)
+
+    eigenvalues, eigenvectors = zip(*eigenComponents)
+    eigenvectors = np.asarray(eigenvectors)
 
     return eigenvalues, eigenvectors
 
-def processTranslation(mesh):
-    mesh_clone = copy.deepcopy(mesh)
 
-    center = mesh_clone.get_center()
-    print(center)
+def processTranslation(mesh):
+
+    mesh_clone = copy.deepcopy(mesh)
+    center = calculateBaryCenter(mesh_clone)
     mesh_clone.translate(-center)
-    print(mesh_clone.get_center())
 
     return mesh_clone
 
+
+#According to https://stackoverflow.com/a/67078389/14264858
+def calculateBaryCenter(mesh):
+    totalVolume = 0
+    totalVolumeWeightedCenters = np.array([0,0,0], dtype= np.float64)
+
+    for triangle in mesh.triangles:
+        currVertices = np.asarray(mesh.vertices)[np.asarray(triangle)]
+
+        currCenter = (currVertices[0] + currVertices[1] + currVertices[2]) / 4
+        currVolume = np.dot(currVertices[0], np.cross(currVertices[1], currVertices[2])) / 6
+
+        totalVolume += currVolume
+        totalVolumeWeightedCenters += currCenter * currVolume
+
+    return totalVolumeWeightedCenters / totalVolume
 
 def processScale(mesh):
     mesh_clone = copy.deepcopy(mesh)
