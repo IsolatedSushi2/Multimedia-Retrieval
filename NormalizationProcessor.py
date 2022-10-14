@@ -20,7 +20,10 @@ def processMesh(path):
 
     translated_mesh = processTranslation(mesh)
     aligned_mesh = processRotation(translated_mesh)
-    #scaled_mesh = processScale(aligned_mesh)
+    scaled_mesh = processScale(aligned_mesh)
+
+
+    o3d.visualization.draw_geometries([mesh, scaled_mesh.translate([2, 0 ,0 ])])
 
 
 def processRotation(mesh):
@@ -74,7 +77,6 @@ def processRotation(mesh):
         mesh_clone.vertices[i][1] *= yScale
         mesh_clone.vertices[i][2] *= zScale
 
-    o3d.visualization.draw_geometries([mesh_clone, mesh.translate([5 ,0 ,0]) ,getEigenVectorLines(eigenvalues, eigenvectors).translate([5, 0 ,0]) ,getEigenVectorLines(_val, _vec)])
 
     return mesh_clone
 
@@ -159,7 +161,7 @@ def processScale(mesh):
     max_size = bounding_box.get_max_extent()
     scale = 1 / max_size
 
-    mesh_clone.scale(scale, center=mesh_clone.get_center())
+    mesh_clone.scale(scale, center=[0, 0, 0])
     return mesh_clone
 
 
