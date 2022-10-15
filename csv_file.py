@@ -1,34 +1,12 @@
-# HISTOGRAMS
-
-import matplotlib.pyplot as plt   # plots: for visualizing the data (e.g. histogram)
-import numpy as np
-import os                         # paths: for getting the files
+import histograms as hist
+import os
 import csv
 import pymeshlab
-import math
 ms = pymeshlab.MeshSet()
-
-
-# Step 2.2: Statistics over the whole database
-# Use the output of the filter, e.g. saved in an Excel sheet or CSV file, to find out
-    # (a) what is the average shape in the database (in terms of vertex and face counts); and
-    # (b) if there are significant outliers from this average (e.g. shapes having many, or few, vertices or cells).
-# The best way to do this is to show a histogram counting how many shapes are in the database for every range of the property of interest (e.g., number of vertices, number of faces, shape class).
-
-def getAllPaths():
-    all_paths = []
-    # Only add paths that lead to .off files: we don't want the label files.
-    for (dirpath, _, filenames) in os.walk(os.getcwd() + '\labeledDb\LabeledDB_new'):
-        for filename in filenames:
-            if filename.endswith('.off'):
-                all_paths.append(os.path.join(dirpath, filename))
-    # Checked and correct: it fetches ALL paths, and all paths are VALID.
-    return all_paths
-
 
 # Writes all the stats to the csv
 def write_csv():
-    all_paths = getAllPaths()
+    all_paths = hist.getAllPaths()
     real_paths = 0
 
     csvpath = os.getcwd() + '\models.csv'
@@ -80,25 +58,5 @@ def plot_csv():
     # (a) what is the average shape in the database (in terms of vertex and face counts);
     vertices = [m[1] for m in models]
     faces    = [m[2] for m in models]
-    make_histogram(vertices,'No. of vertices','Frequency')
-    make_histogram(faces,   'No. of faces'   ,'Frequency')
-
-
-# Reads from the .csv and plots whatever you like.
-def make_histogram(a, xlabel, ylabel, hist_step=200, x_min=0):
-    x_max = max(a)
-    # FEEDBACK: we used too many bins at first. This made the whole thing look unnecessarily noisy.
-    # Now we use the sqrt of the number of models for the number of bins. Looks a lot better!
-    bins = int(math.sqrt(len(a)))
-    average = sum(a)/len(a)
-
-    x,y = np.histogram(a=a, bins=bins, range=(x_min, x_max))
-    plt.stairs(x, y, fill=True)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    # plt.vlines(average, ymin=0, ymax=100) # TODO I WANT TO SHOW AVERAGE
-
-    plt.show()
-
-    # (b) if there are significant outliers from this average (e.g. shapes having many, or few, vertices or cells).
-    # how do I... show that?
+    hist.make_histogram(vertices,'No. of vertices','Frequency')
+    hist.make_histogram(faces,   'No. of faces'   ,'Frequency')

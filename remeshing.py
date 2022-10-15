@@ -2,7 +2,8 @@ import os                         # paths: for getting the files
 import pymeshlab
 ms = pymeshlab.MeshSet()
 
-import csv_and_histograms as csv_hist
+import histograms as hist
+import csv_file
 
 # Step 2.1: Analyzing a single shape
 # Start building a simple filter that checks all shapes in the database. The filter should output, for each shape
@@ -24,7 +25,7 @@ import csv_and_histograms as csv_hist
 
 
 def remesh(remesh_folder = 'models_remesh'):
-    models = csv_hist.read_csv()
+    models = csv_file.read_csv()
 
     vertices_before = [row[1] for row in models]
     vertices_after  = []
@@ -58,8 +59,8 @@ def remesh(remesh_folder = 'models_remesh'):
             print(f"First {i} done")
 
     # Now make a histogram.
-    csv_hist.make_histogram(vertices_before, 'Vertices before remeshing', 'Frequency')
-    csv_hist.make_histogram(vertices_after,  'Vertices after remeshing',  'Frequency')
+    hist.make_histogram(vertices_before, 'Vertices before remeshing', 'Frequency')
+    hist.make_histogram(vertices_after,  'Vertices after remeshing',  'Frequency')
     # We can always make these histograms afterwards, without having to do this all again.
     # That's why we save the models! Just read them from file and print it. Way quicker.
 
@@ -73,7 +74,7 @@ def remesh(remesh_folder = 'models_remesh'):
 def tryDecimate():
 
     # DECIMATING
-    models = csv_hist.read_csv()
+    models = csv_file.read_csv()
     vertices_before = [row[1] for row in models]
 
     for i in range(1,5):
@@ -89,5 +90,5 @@ def tryDecimate():
                 ms.apply_filter('meshing_decimation_clustering', threshold=pymeshlab.Percentage(v))
                 vertices_after.append(m.vertex_number())
 
-        csv_hist.make_histogram(vertices_before, 'Vertices before decimation', 'Frequency')
-        csv_hist.make_histogram(vertices_after,  f'Vertices after decimation, threshold = {v}', 'Frequency')
+        hist.make_histogram(vertices_before, 'Vertices before decimation', 'Frequency')
+        hist.make_histogram(vertices_after,  f'Vertices after decimation, threshold = {v}', 'Frequency')
