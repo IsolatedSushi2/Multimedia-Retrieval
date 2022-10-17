@@ -35,16 +35,8 @@ def getConvexHullVolume(mesh):
     convexHull.orient_triangles()
 
     if not convexHull.is_watertight():
-        hull_ls = o3d.geometry.LineSet.create_from_triangle_mesh(convexHull)
-        hull_ls.paint_uniform_color((1, 0, 0))
-        o3d.visualization.draw_geometries([mesh, hull_ls])
-        self_intersecting = mesh.is_self_intersecting()
-        edge_manifold = mesh.is_edge_manifold(allow_boundary_edges=True)
-        edge_manifold_boundary = mesh.is_edge_manifold(allow_boundary_edges=False)
-        vertex_manifold = mesh.is_vertex_manifold()
-        print(self_intersecting, edge_manifold, edge_manifold_boundary, vertex_manifold)
         print(colored('Not watertight convex hull error', 'red'))
-        return 1
+        return np.Inf
     return convexHull.get_volume()
 
 def extractPyMeshFeatures(mesh_path, features):
