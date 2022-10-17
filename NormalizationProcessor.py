@@ -3,7 +3,12 @@ import copy
 import numpy as np
 from pathlib import Path
 import random
+import matplotlib.pyplot as plt   # plots: for visualizing the data (e.g. histogram)
+from FeatureEx import distance, make_histogram
 
+#global variables
+beforehist = []
+afterhist = []
 
 def processAllMeshes():
     pathList = list(Path('./labeledDb/labeledDB_new').rglob('*.off'))
@@ -11,20 +16,52 @@ def processAllMeshes():
     #     random_path = random.choice(pathList)
     #     processMesh(random_path)
 
+
+    filenr = 0
     for path in pathList:
         processMesh(path)
+        filenr +=1
+        print(filenr, "out off", len(pathList))
 
+    make_histogram(beforehist,'Distance of barycenter to origin (before translation)','Frequency')   
+    make_histogram(afterhist,'Distance of barycenter to origin(after translation)','Frequency') 
 
 def processMesh(path):
     mesh = o3d.io.read_triangle_mesh(".\\" + str(path))
-
     translated_mesh = processTranslation(mesh)
-    aligned_mesh = processRotation(translated_mesh)
-    scaled_mesh = processScale(aligned_mesh)
+    #aligned_mesh = processRotation(translated_mesh)
+    #scaled_mesh = processScale(aligned_mesh)
+    #axis_lines = processAxis()
 
+    #visualization
+    #o3d.visualization.draw_geometries([mesh.translate([2,2,0]), axis_lines, translated_mesh.paint_uniform_color([1,0,0])])
+    #o3d.visualization.draw_geometries([mesh, scaled_mesh.translate([2, 0 ,0 ])])
 
-    o3d.visualization.draw_geometries([mesh, scaled_mesh.translate([2, 0 ,0 ])])
+    #histograms
+    #make disthist before
+    beforehist.append(makeDistHist(mesh))
+    #make disthist after
+    afterhist.append(makeDistHist(translated_mesh))
 
+#makes the axis lines at (0,0,0) of coordinate system
+def processAxis():
+    scale = 10
+    xVector = np.array([1,0,0]) * scale
+    yVector = np.array([0,1,0]) * scale
+    zVector = np.array([0,0,1]) * scale
+    points = np.array([xVector, yVector, zVector, -xVector, -yVector, -zVector])
+    lines = [[0, 3], [1, 4], [2, 5]]
+    #x = red , y = green , z = blue
+    colors = [[1, 0 ,0], [0, 1 ,0], [0, 0 ,1]]
+    line_set = o3d.geometry.LineSet(points=o3d.utility.Vector3dVector(points), lines=o3d.utility.Vector2iVector(lines))
+    line_set.colors = o3d.utility.Vector3dVector(colors)
+    return line_set
+
+def makeDistHist(mesh):
+    center = calculateBaryCenter(mesh)
+    dist = distance(center[0],center[1],center[2],0,0,0)
+    print(dist)
+    return dist
 
 def processRotation(mesh):
     mesh_clone = copy.deepcopy(mesh)
@@ -32,7 +69,7 @@ def processRotation(mesh):
     
 
 
-    print(eigenvalues, eigenvectors)
+    #print(eigenvalues, eigenvectors)
     # rotMatrix = np.array(eigenvectors)
 
     # print("Rotation Matrix", rotMatrix)
@@ -103,7 +140,7 @@ def getEigenVectorLines(eigenvalues, eigenvectors):
     xVector = scale * eigenvectors[0] * eigenvalues[0]
     yVector = scale * eigenvectors[1] * eigenvalues[1]
     zVector = scale * eigenvectors[2] * eigenvalues[2]
-
+    print("DIT IS De xVector:", xVector)
     points = np.array([xVector, yVector, zVector, -
                       xVector, -yVector, -zVector])
     lines = [[0, 3], [1, 4], [2, 5]]
@@ -171,3 +208,4 @@ def normalizeScale():
 
 if __name__ == "__main__":
     processAllMeshes()
+
