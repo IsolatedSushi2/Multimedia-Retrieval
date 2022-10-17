@@ -1,4 +1,0 @@
-No:  meshing_decimation_clustering.
-Yes: meshing_isotropic_explicit_remeshing
-iterations = 3;
-targetlen = 1.5;
