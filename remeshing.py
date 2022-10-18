@@ -59,9 +59,9 @@ def remesh(original_folder, remesh_folder):
             os.mkdir(newpath)
 
         vertices_before.append(m.vertex_number())
-        # ms.apply_filter('meshing_isotropic_explicit_remeshing', iterations=3, targetlen=pymeshlab.Percentage(1.5))
-        while m.vertex_number() > 5000:
-            ms.apply_filter('meshing_decimation_clustering', threshold=pymeshlab.Percentage(1))
+        ms.apply_filter('meshing_isotropic_explicit_remeshing', iterations=3, targetlen=pymeshlab.Percentage(1.5))
+        # while m.vertex_number() > 5000:
+        #     ms.apply_filter('meshing_decimation_clustering', threshold=pymeshlab.Percentage(1.5))
         vertices_after.append(m.vertex_number())
 
         ms.save_current_mesh(newpath + '\\' + filename)
