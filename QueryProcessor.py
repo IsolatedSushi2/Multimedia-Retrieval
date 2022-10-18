@@ -26,7 +26,7 @@ def getKNN(nbrs, featureVector):
     return distances[0], indices[0]
 
 def queryVector(featureVectors, nbrs):
-    index = 0
+    index = 75
     distances, indices = getKNN(nbrs, featureVectors.iloc[index])
     results = featureVectors.iloc[indices]
 
