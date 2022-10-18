@@ -12,7 +12,7 @@ def extractFeatures(mesh_path):
 
     features = {}
     features["surfaceArea"] = mesh.get_surface_area()
-    features["compactness"] = getCompactness(features["surfaceArea"], getConvexHullVolume(mesh))
+    features["compactness"] = getCompactness(features["surfaceArea"], getApproximatedVolume(mesh))
     features["BBoxVolume"] = mesh.get_axis_aligned_bounding_box().volume()
     features["diameter"] = getDiameter(mesh.vertices)
     features["eccentricity"] = getEccentricity(mesh)
@@ -30,6 +30,14 @@ def getDiameter(vertices):
 def getCompactness(surface, volume):
     return (surface ** 3) / (36 * np.pi * volume ** 2)
 
+def getApproximatedVolume(mesh):
+    tetraVolumes = [getTetraVolumeFromFace(face, mesh) for face in mesh.triangles]
+    return np.sum(tetraVolumes)
+
+def getTetraVolumeFromFace(face, mesh):
+    vertices = np.array(mesh.vertices)[np.array(face)]
+    return np.dot(vertices[0], np.cross(vertices[1], vertices[2])) / 6
+
 def getConvexHullVolume(mesh):
     convexHull, _ = mesh.compute_convex_hull()
     convexHull.orient_triangles()
@@ -39,13 +47,9 @@ def getConvexHullVolume(mesh):
         return np.Inf
     return convexHull.get_volume()
 
-def extractPyMeshFeatures(mesh_path, features):
-    raise NotImplementedError()
-
 if __name__ == "__main__":
     pathList = list(Path('./').rglob('*.off'))
     allFeatures = [extractFeatures(path) for path in pathList]
 
     dataFrame = pandas.DataFrame(allFeatures, index=pathList)
     dataFrame.to_csv("./database/features.csv")
-
