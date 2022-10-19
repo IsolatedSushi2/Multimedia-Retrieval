@@ -13,7 +13,7 @@ def extractFeatures(mesh_path):
     features = {}
     features["surfaceArea"] = mesh.get_surface_area()
     features["compactness"] = getCompactness(features["surfaceArea"], getApproximatedVolume(mesh))
-    features["BBoxVolume"] = mesh.get_axis_aligned_bounding_box().volume()
+    features["rectangularity"] = getApproximatedVolume(mesh) / mesh.get_axis_aligned_bounding_box().volume()
     features["diameter"] = getDiameter(mesh.vertices)
     features["eccentricity"] = getEccentricity(mesh)
 
@@ -48,7 +48,9 @@ def getConvexHullVolume(mesh):
     return convexHull.get_volume()
 
 if __name__ == "__main__":
-    pathList = list(Path('./').rglob('*.off'))
+    pathList = list(Path('./labeledDb/LabeledDB_new/').rglob('*.off'))
+
+    print(colored(f"Extracting features for {len(pathList)} meshes"))
     allFeatures = [extractFeatures(path) for path in pathList]
 
     dataFrame = pandas.DataFrame(allFeatures, index=pathList)
