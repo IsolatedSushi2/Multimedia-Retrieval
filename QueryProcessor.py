@@ -3,6 +3,7 @@ import numpy as np
 from scipy import stats
 from sklearn.neighbors import NearestNeighbors
 from termcolor import colored
+import random
 
 def normalizeFeatures():
     features = pandas.read_csv('./database/features.csv', index_col=[0])
@@ -26,7 +27,8 @@ def getKNN(nbrs, featureVector):
     return distances[0], indices[0]
 
 def queryVector(featureVectors, nbrs):
-    index = 75
+    index = random.randint(0, len(featureVectors))
+    #index = 79
     distances, indices = getKNN(nbrs, featureVectors.iloc[index])
     results = featureVectors.iloc[indices]
 
