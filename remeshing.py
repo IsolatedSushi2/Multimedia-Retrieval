@@ -2,6 +2,9 @@ import os                         # paths: for getting the files
 import pymeshlab
 ms = pymeshlab.MeshSet()
 
+import math
+import random
+
 import histograms as hist
 import csv_file
 
@@ -23,11 +26,12 @@ import csv_file
 # https://pymeshlab.readthedocs.io/en/latest/filter_list.html
 # For what a mesh all contains.
 
+# e.g. original_folder='\labeledDb', remesh_folder='models_remesh'
+def remesh(original_folder, remesh_folder):
+    all_paths = hist.getAllPaths(original_folder)
+    # this gets all the full paths leading to an .off file within a folder.
 
-def remesh(remesh_folder = 'models_remesh'):
-    models = csv_file.read_csv()
-
-    vertices_before = [row[1] for row in models]
+    vertices_before = []
     vertices_after  = []
 
     # empty remeshpath if existing, or create if not
@@ -37,24 +41,31 @@ def remesh(remesh_folder = 'models_remesh'):
         return
     os.mkdir(remeshpath)
 
-    for i in range(len(models)):
-        model = models[i]
+    printeach = math.floor(math.sqrt(len(all_paths)))
 
-        path = os.getcwd() + model[-1]
-        remeshpath = os.getcwd() + '\\' + remesh_folder + '\\' + os.path.basename(model[-1])
+    for i in range(len(all_paths)):
+        path = all_paths[i]
 
-        ms.clear() # to make sure we don't apply the filter to all other meshes too
+        ms.clear() # to make sure we don't apply the filter to all previous meshes too
         ms.load_new_mesh(path)
         m = ms.current_mesh()
 
-        # if model[1] > 6000:
-        #     ms.apply_filter('meshing_decimation_clustering', threshold=pymeshlab.Percentage(1.5))
-        ms.apply_filter('meshing_isotropic_explicit_remeshing', iterations=3, targetlen=pymeshlab.Percentage(1.5))
-        # ms.apply_filter('generate_resampled_uniform_mesh', cellsize=pymeshlab.Percentage(p), mergeclosevert=True)
-        vertices_after.append(m.vertex_number())
-        ms.save_current_mesh(remeshpath)
+        filename   = os.path.basename(path)
+        foldername = os.path.basename(os.path.dirname(path)) # the folder-name, e.g. "Airplane"
+        newpath    = remeshpath + '\\' + foldername
+        
+        # if the folder doesn't exist yet, create it
+        if not os.path.exists(newpath):
+            os.mkdir(newpath)
 
-        printeach = 10
+        vertices_before.append(m.vertex_number())
+        ms.apply_filter('meshing_isotropic_explicit_remeshing', iterations=3, targetlen=pymeshlab.Percentage(1.5))
+        # while m.vertex_number() > 5000:
+        #     ms.apply_filter('meshing_decimation_clustering', threshold=pymeshlab.Percentage(1.5))
+        vertices_after.append(m.vertex_number())
+
+        ms.save_current_mesh(newpath + '\\' + filename)
+
         if i % printeach == 0:
             print(f"First {i} done")
 
@@ -65,9 +76,60 @@ def remesh(remesh_folder = 'models_remesh'):
     # That's why we save the models! Just read them from file and print it. Way quicker.
 
 
-# generate_resampled_uniform mesh: cellsize = 1, no change whatsoever.
-# generate_resampled_uniform mesh: cellsize = 2, no change whatsoever.
 
+
+
+
+
+
+
+
+def TryValues():
+    all_paths = hist.getAllPaths('\labeledDB')
+    # this gets all the full paths leading to an .off file within a folder.
+
+    reduction = []
+
+    printeach = math.floor(math.sqrt(len(all_paths)))
+
+    # fetch 50 random meshes.
+    amount = 50
+    for i in range(amount):
+        i = random.randint(0,len(all_paths)-1)
+        path = all_paths[i]
+
+        ms.clear() # to make sure we don't apply the filter to all previous meshes too
+        ms.load_new_mesh(path)
+        m = ms.current_mesh()
+
+        # It seems...
+        # 1.5 = 50 percent (50) 50
+        # 2.0 = 25 percent (30) 30
+        # 2.5 = 13 percent (16) 20
+        # 3.0 = 13 percent (14) 15
+        # 3.5 = 10 percent (10) 12.5
+
+        # I could try: if number > so many, do this amount, etc.
+        # or "fuck it". Just do it normally.
+
+        before = m.vertex_number()
+        ms.apply_filter('meshing_isotropic_explicit_remeshing', iterations=3, targetlen=pymeshlab.Percentage(3.5))
+        after = m.vertex_number()
+        reduction.append(after/before*100)
+    print(reduction)
+    print(f"Between {min(reduction)} - {max(reduction)}. Average: {sum(reduction)/len(reduction)}")
+
+def printVertices(folder):
+    all_paths = hist.getAllPaths(folder)
+    # this gets all the full paths leading to an .off file within a folder.
+
+    vertice_inrange = 0
+    for path in all_paths:
+        ms.load_new_mesh(path)
+        m = ms.current_mesh()
+        if m.vertex_number() <= 5000:
+            vertice_inrange += 1
+    print(vertice_inrange / len(all_paths))
 
 
 # TEMPORARY TRY FUNCTION, TRIES OUT MULTIPLE VALUES TO SEE WHICH ONE IS BEST
