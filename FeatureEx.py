@@ -145,11 +145,29 @@ def extract_d2(pcd):
     #print(hist_dist)
     make_histogram(hist_dist,'Distance of 2 random vertices','Frequency')
 
-'''
-def extract_d3():
-    #square root of area of triangle given by 3 random vertices
 
-'''
+def extract_d3(pcd):
+    hist_d3 = []
+    for x in range(n):
+        r1 = random.randint(0, n-1)
+        r2 = random.randint(0, n-1)
+        r3 = random.randint(0, n-1)
+        pt1 = pcd.points[r1]
+        #make sure r1 =/= r2
+        while r1 == r2:
+            r2 = random.randint(0, n-1)
+        pt2 = pcd.points[r2]
+
+        #make sure r3 =/= r1 or r2
+        while r3 == r2 or r3 == r1:
+            r3 = random.randint(0, n-1)
+        pt3 = pcd.points[r3]
+
+    #square root of area of triangle given by 3 random vertices
+    #cross gives parallelogram so *0.5 for triangle
+    triangleArea = 0.5 * np.cross((pt1-pt2),(pt3-pt2))
+    hist_d3.append(triangleArea)
+
 
 
 
