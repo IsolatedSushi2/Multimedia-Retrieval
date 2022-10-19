@@ -44,5 +44,4 @@ def make_histogram(a, xlabel="", ylabel="", x_min=None, x_max=None):
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.axvline(x=average, color='black') # shows a vertical line around the average
-
     plt.show()

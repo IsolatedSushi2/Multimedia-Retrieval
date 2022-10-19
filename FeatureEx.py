@@ -39,6 +39,21 @@ def make_histogram(a, xlabel, ylabel, x_min=0):
     plt.ylabel(ylabel)
     plt.show()
 
+def make_histogram_comparison(y1, xlabel, ylabel, x_min, y2, x2label, y2label):
+    x_max = max(y1)
+    print(x_max)
+    x,y = np.histogram(a=y1, bins=int(math.sqrt(len(y1))), range=(x_min, x_max))
+    plt.stairs(x, y, fill=True)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.show()
+
+    x,y = np.histogram(a=y2, bins=int(math.sqrt(len(y1))), range=(x_min, x_max))
+    plt.stairs(x, y, fill=True)
+    plt.xlabel(x2label)
+    plt.ylabel(y2label)
+    plt.show()
+
 # Function to find distance in 3d points
 def distance(x1, y1, z1, x2, y2, z2):
       
