@@ -4,33 +4,83 @@ import numpy as np
 from pathlib import Path
 import random
 import matplotlib.pyplot as plt   # plots: for visualizing the data (e.g. histogram)
-from FeatureEx import distance, make_histogram
+from FeatureEx import distance, make_histogram, make_histogram_comparison
+import os
+import sys
 
 #global variables
 beforehist = []
 afterhist = []
+dircheck = True
+
 
 def processAllMeshes():
-    pathList = list(Path('./labeledDb/labeledDB_new').rglob('*.off'))
-    # while True:
-    #     random_path = random.choice(pathList)
-    #     processMesh(random_path)
+    #base path change based on step.
+    #pathList = list(Path('./labeledDb/labeledDB_new').rglob('*.off'))
+    
+    #for remesh -> center
+    #pathList = list(Path('./models_remesh').rglob('*.off'))
+    #Path_out = 'models_center'
+    
+    #for center -> allign
+    #pathList= list(Path('./models_center').rglob('*.off'))   
+    #Path_out = 'models_alligned'
+    
+    #for allig -> flip
+    pathList= list(Path('./models_alligned').rglob('*.off'))   
+    Path_out = 'models_flipped'
+
+    #for flip -> scalled (finalized)
+    pathList= list(Path('./models_flipped').rglob('*.off'))   
+    Path_out = 'models_scaled_final'
+    
+    if dircheck:
+        check_dir_exists(Path_out)
 
 
     filenr = 0
     for path in pathList:
-        processMesh(path)
-        filenr +=1
-        print(filenr, "out off", len(pathList))
+        processMesh(path, Path_out)
+        #filenr +=1
+        #print(filenr, "out off", len(pathList))
 
-    make_histogram(beforehist,'Distance of barycenter to origin (before translation)','Frequency')   
-    make_histogram(afterhist,'Distance of barycenter to origin(after translation)','Frequency') 
+    #histograms for before after centrilization
+    #make_histogram_comparison(beforehist,'Distance of barycenter to origin (before translation)','Frequency', 0, afterhist, 'Distance of barycenter to origin(after translation)','Frequency')
 
-def processMesh(path):
+def safe_mesh(mesh, foldername, path):
+    newpath = os.getcwd() + '\\' + foldername + '\\' + os.path.basename(path)
+    print(newpath)
+    o3d.io.write_triangle_mesh(newpath, mesh)
+
+def check_dir_exists(foldername):
+    remeshpath = os.getcwd() + '\\' + foldername
+    if os.path.exists(remeshpath):
+        print("Cannot put remeshes in existing folder. Afraid of messing everything up.")
+        sys.exit("ERROR")
+    else:
+        os.mkdir(remeshpath)
+
+def processMesh(path, foldername):
     mesh = o3d.io.read_triangle_mesh(".\\" + str(path))
-    translated_mesh = processTranslation(mesh)
-    #aligned_mesh = processRotation(translated_mesh)
-    #scaled_mesh = processScale(aligned_mesh)
+    #translated_mesh = o3d.io.read_triangle_mesh(".\\" + foldername + '\\' + os.path.basename(path))
+    
+    #translation
+    #translated_mesh = processTranslation(mesh)
+    #safe_mesh(translated_mesh, foldername, path)
+
+    #allignment
+    #aligned_mesh = processRotation(mesh)
+    #safe_mesh(aligned_mesh, foldername, path)
+
+    #flipping
+    #flipped_mesh = processFlipping(mesh)
+    #safe_mesh(flipped_mesh, foldername, path)
+
+    #scale
+    scaled_mesh = processScale(mesh)
+    safe_mesh(scaled_mesh, foldername, path)
+
+    #axis_lines (for visualization)
     #axis_lines = processAxis()
 
     #visualization
@@ -39,9 +89,9 @@ def processMesh(path):
 
     #histograms
     #make disthist before
-    beforehist.append(makeDistHist(mesh))
+    #beforehist.append(makeDistHist(mesh))
     #make disthist after
-    afterhist.append(makeDistHist(translated_mesh))
+    #afterhist.append(makeDistHist(translated_mesh))
 
 #makes the axis lines at (0,0,0) of coordinate system
 def processAxis():
@@ -104,6 +154,10 @@ def processRotation(mesh):
     _val, _vec = eigenValuesFromMesh(mesh_clone)
     #o3d.visualization.draw_geometries([mesh_clone, mesh.translate([5 ,0 ,0]) ,getEigenVectorLines(eigenvalues, eigenvectors).translate([5, 0 ,0]) ,getEigenVectorLines(_val, _vec)])
 
+    return mesh_clone
+    
+def processFlipping(mesh):
+    mesh_clone = copy.deepcopy(mesh)
 
     xScale, yScale, zScale = getFlippingSign(mesh_clone)
 
@@ -113,7 +167,6 @@ def processRotation(mesh):
         mesh_clone.vertices[i][0] *= xScale
         mesh_clone.vertices[i][1] *= yScale
         mesh_clone.vertices[i][2] *= zScale
-
 
     return mesh_clone
 
