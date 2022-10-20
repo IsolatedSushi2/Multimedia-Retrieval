@@ -21,13 +21,19 @@ def extractFeatures(mesh_path):
     # The 5 distribution features
     num_samples = 10
     points = np.array(mesh.sample_points_uniformly(number_of_points=num_samples).points)
-    features["d1"] = getD1(points)
-    features["d2"] = getD2(points)
-    features["d3"] = getD3(points)
-    features["d4"] = getD4(points)
+    
+    d1Values = getD1(points)
+    d2Values = getD2(points)
+    d3Values = getD3(points)
+    d4Values = getD4(points)
+    a3Values = getA3(points)
 
-    print(features)
-    exit()
+    # features["d1"] = binned values
+    # features["d2"] = binned values
+    # features["d3"] = binned values
+    # features["d4"] = binned values
+    # features["a3"] = binned values
+
     return features
 
 #Get the distance to bary center (which was translated to 0,0,0)
