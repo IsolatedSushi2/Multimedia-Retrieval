@@ -132,7 +132,7 @@ def getConvexHullVolume(mesh):
 
 
 if __name__ == "__main__":
-    pathList = list(Path('./labeledDb/LabeledDB_new/').rglob('*.off'))
+    pathList = list(Path('./models_final/').rglob('*.off'))
 
     print(colored(f"Extracting features for {len(pathList)} meshes"))
     allFeatures = [extractFeatures(path) for path in pathList]
