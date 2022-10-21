@@ -42,7 +42,7 @@ def queryVector(featureVectors, nbrs):
     print(colored(f'{sum(guessScores)} guessses correct out of {len(guessScores)}', 'yellow', attrs=['underline']))
 
 def getClassFromPath(path):
-    return path.split('\\')[-2]
+    return str(path).split('\\')[-2]
 
 def isNeighbourCorrect(basePath, nnPath):
     return getClassFromPath(basePath) == getClassFromPath(nnPath)
