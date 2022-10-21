@@ -19,7 +19,7 @@ def extractFeatures(mesh_path):
     features["eccentricity"] = getEccentricity(mesh)
 
     # The 5 distribution features
-    num_samples = 10
+    num_samples = 10000
     points = np.array(mesh.sample_points_uniformly(number_of_points=num_samples).points)
     
     d1Values = getD1(points)
@@ -27,6 +27,8 @@ def extractFeatures(mesh_path):
     d3Values = getD3(points)
     d4Values = getD4(points)
     a3Values = getA3(points)
+
+    print(d1Values.shape, d2Values.shape, d3Values.shape, d4Values.shape, a3Values.shape, )
 
     # features["d1"] = binned values
     # features["d2"] = binned values
@@ -53,14 +55,14 @@ def getD3(points):
     randomPointPairs = np.array([points[np.random.choice(points.shape[0], 3, replace=False)] for _ in points])
     crossProducts = np.cross(randomPointPairs[:, 1, :] - randomPointPairs[:, 0, :], randomPointPairs[:, 2, :] - randomPointPairs[:, 0, :])
     #Calculate and return the area
-    return 0.5 * np.linalg.norm(crossProducts, axis=1)
+    return np.sqrt(0.5 * np.linalg.norm(crossProducts, axis=1))
 
 #https://stackoverflow.com/questions/9866452/calculate-volume-of-any-tetrahedron-given-4-points/9866530
 def getD4(points):
     randomPointPairs = np.array([points[np.random.choice(points.shape[0], 4, replace=False)] for _ in points])
     crossProducts = np.cross(randomPointPairs[:, 1, :] - randomPointPairs[:, 3, :], randomPointPairs[:, 2, :] - randomPointPairs[:, 3, :])
     #Calculate and return the volume
-    return np.abs(np.sum((randomPointPairs[:, 0, :] - randomPointPairs[:, 3, :]) * crossProducts, axis=1)) / 6
+    return np.cbrt(np.abs(np.sum((randomPointPairs[:, 0, :] - randomPointPairs[:, 3, :]) * crossProducts, axis=1)) / 6)
 
 #https://stackoverflow.com/questions/1211212/how-to-calculate-an-angle-from-three-points
 def getA3(points):
