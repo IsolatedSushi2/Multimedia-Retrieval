@@ -8,11 +8,13 @@ import pandas
 from termcolor import colored
 import QueryProcessor
 import json
+import multiprocessing as mp
 
+Q = mp.Queue()
 
 def extractFeatures(mesh_path):
     mesh = o3d.io.read_triangle_mesh(".\\" + str(mesh_path))
-
+    # print(mesh_path)
     # Features are disabeled for now
     # features = {}
     # # The 5 scalar features
@@ -22,8 +24,8 @@ def extractFeatures(mesh_path):
     # features["diameter"] = getDiameter(mesh.vertices)
     # features["eccentricity"] = getEccentricity(mesh)
 
-    # The 5 distribution features
-    num_samples = 1000
+    # The 5 distribution features on N=100000
+    num_samples = 100000
     points = np.array(mesh.sample_points_uniformly(
         number_of_points=num_samples).points)
 
@@ -35,13 +37,13 @@ def extractFeatures(mesh_path):
 
     histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(
         mesh_path), "d1": d1Values.tolist(), "d2": d2Values.tolist(), "d3": d3Values.tolist(), "d4": d4Values.tolist(), "a3": a3Values.tolist()}
+    #histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(mesh_path)}
 
     # features["d1"] = binned values
     # features["d2"] = binned values
     # features["d3"] = binned values
     # features["d4"] = binned values
     # features["a3"] = binned values
-
     return histDict
 
 # Get the distance to bary center (which was translated to 0,0,0)
@@ -131,14 +133,34 @@ def getConvexHullVolume(mesh):
     return convexHull.get_volume()
 
 
+allFeatures = []
+def log_result(result):
+    # This is called whenever extractFeatures returns a result.
+    # allFeatures list is modified only by the main process, not the pool workers.
+    allFeatures.append(result)
+
 if __name__ == "__main__":
     pathList = list(Path('./models_final/').rglob('*.off'))
-
     print(colored(f"Extracting features for {len(pathList)} meshes"))
-    allFeatures = [extractFeatures(path) for path in pathList]
+    #allFeatures = [extractFeatures(path) for path in pathList]
+    
+    #multi-process Json-Creation of featurefactor
+    for i in range(int(380/20)):
+        print("start met stap i =" , i)
+        pool = mp.Pool()
+        allFeatures = []
+        #new file every 20 meshes (inbetween saving vs crashes / other nasty interrupts.)
+        copyPath = pathList[(i*20):((i+1)*20)]
+        for path in copyPath:
+            pool.apply_async(extractFeatures, args=(path,), callback = log_result)
+        pool.close()
+        pool.join()
+        fileloc = "./database/histValues" + str(i) + ".json"
+        with open(fileloc, 'w') as f:
+            json.dump(allFeatures, f)
 
-    with open('./database/histValues.json', 'w') as f:
-        json.dump(allFeatures, f)
-
+#commented out the dataframe panda since this wont be used just yet
+'''       
     dataFrame = pandas.DataFrame(allFeatures, index=pathList)
     dataFrame.to_csv("./database/features.csv")
+'''
