@@ -25,7 +25,7 @@ def extractFeatures(mesh_path):
     # features["eccentricity"] = getEccentricity(mesh)
 
     # The 5 distribution features on N=100000
-    num_samples = 100000
+    num_samples = 10
     points = np.array(mesh.sample_points_uniformly(
         number_of_points=num_samples).points)
 
@@ -35,8 +35,8 @@ def extractFeatures(mesh_path):
     d4Values = getD4(points)
     a3Values = getA3(points)
 
-    histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(
-        mesh_path), "d1": d1Values.tolist(), "d2": d2Values.tolist(), "d3": d3Values.tolist(), "d4": d4Values.tolist(), "a3": a3Values.tolist()}
+    histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(mesh_path), "d1": d1Values.tolist(), "d2": d2Values.tolist(), "d3": d3Values.tolist(), "d4": d4Values.tolist(), "a3": a3Values.tolist()}
+    #histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(mesh_path), "a3": a3Values.tolist()}
     #histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(mesh_path)}
 
     # features["d1"] = binned values
@@ -93,8 +93,7 @@ def getA3(points):
     line1 = randomPointPairs[:, 0, :] - randomPointPairs[:, 1, :]
     line2 = randomPointPairs[:, 2, :] - randomPointPairs[:, 1, :]
 
-    cosine_angle = np.sum(line1 * line2, axis=1) / \
-        (np.linalg.norm(line1) * np.linalg.norm(line2))
+    cosine_angle = np.sum(line1 * line2, axis=1) / (np.linalg.norm(line1, axis=1) * np.linalg.norm(line2, axis=1))
     return np.arccos(cosine_angle)
 
 
