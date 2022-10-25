@@ -16,26 +16,26 @@ def extractFeatures(mesh_path):
     mesh = o3d.io.read_triangle_mesh(".\\" + str(mesh_path))
     # print(mesh_path)
     # Features are disabeled for now
-    # features = {}
-    # # The 5 scalar features
-    # features["surfaceArea"] = mesh.get_surface_area()
-    # features["compactness"] = getCompactness(features["surfaceArea"], getApproximatedVolume(mesh))
-    # features["rectangularity"] = getApproximatedVolume(mesh) / mesh.get_axis_aligned_bounding_box().volume()
-    # features["diameter"] = getDiameter(mesh.vertices)
-    # features["eccentricity"] = getEccentricity(mesh)
+    features = {}
+    # The 5 scalar features
+    features["surfaceArea"] = mesh.get_surface_area()
+    features["compactness"] = getCompactness(features["surfaceArea"], getApproximatedVolume(mesh))
+    features["rectangularity"] = getApproximatedVolume(mesh) / mesh.get_axis_aligned_bounding_box().volume()
+    features["diameter"] = getDiameter(mesh.vertices)
+    features["eccentricity"] = getEccentricity(mesh)
 
     # The 5 distribution features on N=100000
     num_samples = 10
     points = np.array(mesh.sample_points_uniformly(
         number_of_points=num_samples).points)
 
-    d1Values = getD1(points)
-    d2Values = getD2(points)
-    d3Values = getD3(points)
-    d4Values = getD4(points)
-    a3Values = getA3(points)
+    # d1Values = getD1(points)
+    # d2Values = getD2(points)
+    # d3Values = getD3(points)
+    # d4Values = getD4(points)
+    # a3Values = getA3(points)
 
-    histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(mesh_path), "d1": d1Values.tolist(), "d2": d2Values.tolist(), "d3": d3Values.tolist(), "d4": d4Values.tolist(), "a3": a3Values.tolist()}
+    # histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(mesh_path), "d1": d1Values.tolist(), "d2": d2Values.tolist(), "d3": d3Values.tolist(), "d4": d4Values.tolist(), "a3": a3Values.tolist()}
     #histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(mesh_path), "a3": a3Values.tolist()}
     #histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(mesh_path)}
 
@@ -44,7 +44,7 @@ def extractFeatures(mesh_path):
     # features["d3"] = binned values
     # features["d4"] = binned values
     # features["a3"] = binned values
-    return histDict
+    return features
 
 # Get the distance to bary center (which was translated to 0,0,0)
 
