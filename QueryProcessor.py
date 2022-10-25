@@ -4,6 +4,33 @@ import scipy
 from sklearn.neighbors import NearestNeighbors
 from termcolor import colored
 import random
+import time
+import faiss                   # make faiss available
+
+
+def getSortedNeighboursFaiss(queryModel, features, k=10):
+    data = []
+    classes = [getClassFromPath(path) for path in features]
+    # print(classes)
+    for filename in features:
+        row = features[filename]
+        values = list(row.values())
+        flat_list = values[:5] + [item for sublist in values[5:] for item in sublist]
+        data.append(flat_list)
+    data = np.array(data).astype('float32')
+
+    index = faiss.IndexFlatL2(data.shape[1])   # build the index
+    index.add(data)
+
+    D, I = index.search(data, k) # sanity check
+
+    fileNames = list(features.keys())
+    tuples = []
+    for i in range(len(D)):
+        tuples.append((D[i], fileNames[i]))
+
+    return 0
+
 
 def getSortedNeighbours(queryModel, features, k=10):
     
@@ -17,10 +44,10 @@ def getSortedNeighbours(queryModel, features, k=10):
         if(correctGuess):
             count += 1
         color = 'green' if correctGuess else 'red'
-        # print(colored(f'With a distance of {distance}. Guessed class {getClassFromPath(path)}', color))
+        print(colored(f'With a distance of {distance}. Guessed class {getClassFromPath(path)}', color))
 
     accuracy = count / k
-    print(colored(f"Queried for mesh {queryModel}, accuracy {accuracy * 100}%", "yellow"))
+    # print(colored(f"Queried for mesh {queryModel}, accuracy {accuracy * 100}%", "yellow"))
     return accuracy
 
 def getDistance(queryVector, otherVector):
@@ -59,16 +86,32 @@ def getClassFromPath(path):
 def isNeighbourCorrect(basePath, nnPath):
     return getClassFromPath(basePath) == getClassFromPath(nnPath)
 
+def queryAllVectors(k, features):
+    t = time.time()
+    distances = [getSortedNeighbours("models_final\\Airplane\\64.off", features, k) ]
+    # distances = [getSortedNeighboursFaiss(queryModel, features, k) for queryModel in features]
+    print(colored(f"Queried {len(distances)} meshes with k={k}, with an average accuracy of {np.mean(distances)} which took {time.time() - t} seconds", "red"))
+
+def getFeatureVectors(n, features):
+
+    returnDict = {}
+    for i in range(n):
+        index = i % len(features)
+        filename = list(features.keys())[index] + "copy" * int(i / len(features))
+        returnDict[filename] = list(features.values())[index]
+    return returnDict
+
 def main():
     with open("./database/normalized_features.json", "r") as read_content:
         features = json.load(read_content)
 
     k = 10
-    distances = [getSortedNeighbours(queryModel, features, k) for queryModel in features]
-    print(colored(f"Queried {len(distances)} meshes with k={k}, with an average accuracy of {np.mean(distances)}", "red"))
+    
+    # For checking how fast the querying is
+    # sampledVectors = getFeatureVectors(100000, features)
+    queryAllVectors(k, features)
 
-    # nbrs = getNearestNeighours(featureVectors)
-    # queryVector(featureVectors, nbrs)
+
 
 if __name__ == "__main__":
     main()

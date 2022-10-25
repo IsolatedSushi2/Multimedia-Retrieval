@@ -19,7 +19,7 @@ for filename in features:
 data = np.array(data)
 
 X_embedded = TSNE(n_components=2, learning_rate='auto',
-                  init='random', perplexity=3).fit_transform(data)
+                  init='random', perplexity=40).fit_transform(data)
 palette = sns.color_palette(None, len(set(classes)))
 colorMapper = dict(zip(set(classes), palette))
 print(colorMapper)
