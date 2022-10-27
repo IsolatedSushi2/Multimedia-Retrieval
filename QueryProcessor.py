@@ -21,7 +21,7 @@ def getSortedNeighbours(queryModel, features, k=10):
         print(colored(f'With a distance of {distance}. Guessed class {getClassFromPath(path)}', color))
 
     accuracy = count / k
-    # print(colored(f"Queried for mesh {queryModel}, accuracy {accuracy * 100}%", "yellow"))
+    print(colored(f"Queried for mesh {queryModel}, accuracy {accuracy * 100}%", "yellow"))
     return accuracy
 
 def getDistance(queryVector, otherVector):
@@ -79,8 +79,8 @@ def main():
     with open("./database/normalized_features.json", "r") as read_content:
         features = json.load(read_content)
 
-    k = 10
-    getSortedNeighbours("models_final\\Airplane\\64.off", features, k)
+    k = 5
+    getSortedNeighbours("models_final\\Cup\\21.off", features, k)
 
 
 if __name__ == "__main__":
