@@ -7,6 +7,8 @@ import random
 
 import histograms as hist
 import csv_file
+import matplotlib.pyplot as plt
+import numpy as np
 
 # Step 2.1: Analyzing a single shape
 # Start building a simple filter that checks all shapes in the database. The filter should output, for each shape
@@ -88,36 +90,42 @@ def TryValues():
     all_paths = hist.getAllPaths('\labeledDB')
     # this gets all the full paths leading to an .off file within a folder.
 
-    reduction = []
-
-    printeach = math.floor(math.sqrt(len(all_paths)))
-
-    # fetch 50 random meshes.
-    amount = 50
+    which = []
+    amount = 60
     for i in range(amount):
         i = random.randint(0,len(all_paths)-1)
         path = all_paths[i]
+        which.append(path)
+    bins = math.floor(math.sqrt(amount))
 
-        ms.clear() # to make sure we don't apply the filter to all previous meshes too
-        ms.load_new_mesh(path)
-        m = ms.current_mesh()
+    vertices = []
+    for p in range(4):
+        pc = p/2+0.5 # 0.5, 1, 1.5, 2
+        print("p=",pc)
+        vertices.append([])
+        for i in range(amount):
+            path = which[i]
+            ms.clear() # to make sure we don't apply the filter to all previous meshes too
+            ms.load_new_mesh(path)
+            m = ms.current_mesh()
+            ms.apply_filter('meshing_isotropic_explicit_remeshing', iterations=3, targetlen=pymeshlab.Percentage(pc))
+            after = m.vertex_number()
+            vertices[p].append(after)
 
-        # It seems...
-        # 1.5 = 50 percent (50) 50
-        # 2.0 = 25 percent (30) 30
-        # 2.5 = 13 percent (16) 20
-        # 3.0 = 13 percent (14) 15
-        # 3.5 = 10 percent (10) 12.5
+            if i % bins == 0:
+                print(f"{i} done")
 
-        # I could try: if number > so many, do this amount, etc.
-        # or "fuck it". Just do it normally.
+        y,_ = np.histogram(a=vertices[p], bins=bins)
+        plt.plot([(i+0.5)*bins for i in range(bins)], y, label=f"targetlen={pc}") # plot them
 
-        before = m.vertex_number()
-        ms.apply_filter('meshing_isotropic_explicit_remeshing', iterations=3, targetlen=pymeshlab.Percentage(3.5))
-        after = m.vertex_number()
-        reduction.append(after/before*100)
-    print(reduction)
-    print(f"Between {min(reduction)} - {max(reduction)}. Average: {sum(reduction)/len(reduction)}")
+    print(vertices)
+    plt.xlabel(f"Vertex-count after remeshing")
+    plt.ylabel("Frequency")
+    plt.savefig(f"targetlen_tryout.png")
+    plt.legend()
+    plt.show()
+
+
 
 def printVertices(folder):
     all_paths = hist.getAllPaths(folder)
