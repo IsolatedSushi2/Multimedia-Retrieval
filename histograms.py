@@ -46,6 +46,7 @@ def make_histogram(a, xlabel="", ylabel="", x_min=None, x_max=None):
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.axvline(x=average, color='black') # shows a vertical line around the average
+
     plt.show()
 
 
@@ -74,3 +75,4 @@ def ColoredHist(path):
 
         # Currently it just saves all the classes in the Github repository.
         # Optionally you could force it to save in a map already. But that can be done manually too
+

@@ -11,7 +11,7 @@ import sys
 #global variables
 beforehist = []
 afterhist = []
-dircheck = True
+dircheck = False
 
 
 def processAllMeshes():
@@ -23,16 +23,16 @@ def processAllMeshes():
     #Path_out = 'models_center'
     
     #for center -> allign
-    #pathList= list(Path('./models_center').rglob('*.off'))   
-    #Path_out = 'models_alligned'
+    pathList= list(Path('./models_center').rglob('*.off'))   
+    Path_out = 'models_alligned'
     
     #for allig -> flip
-    pathList= list(Path('./models_alligned').rglob('*.off'))   
-    Path_out = 'models_flipped'
+    #pathList= list(Path('./models_alligned').rglob('*.off'))   
+    #Path_out = 'models_flipped'
 
     #for flip -> scalled (finalized)
-    pathList= list(Path('./models_flipped').rglob('*.off'))   
-    Path_out = 'models_scaled_final'
+    #pathList= list(Path('./models_flipped').rglob('*.off'))   
+    #Path_out = 'models_scaled_final'
     
     if dircheck:
         check_dir_exists(Path_out)
@@ -69,7 +69,7 @@ def processMesh(path, foldername):
     #safe_mesh(translated_mesh, foldername, path)
 
     #allignment
-    #aligned_mesh = processRotation(mesh)
+    aligned_mesh = processRotation(mesh)
     #safe_mesh(aligned_mesh, foldername, path)
 
     #flipping
@@ -77,8 +77,8 @@ def processMesh(path, foldername):
     #safe_mesh(flipped_mesh, foldername, path)
 
     #scale
-    scaled_mesh = processScale(mesh)
-    safe_mesh(scaled_mesh, foldername, path)
+    #scaled_mesh = processScale(mesh)
+    #safe_mesh(scaled_mesh, foldername, path)
 
     #axis_lines (for visualization)
     #axis_lines = processAxis()
@@ -152,7 +152,7 @@ def processRotation(mesh):
         mesh_clone.vertices[i] = newVertex
 
     _val, _vec = eigenValuesFromMesh(mesh_clone)
-    #o3d.visualization.draw_geometries([mesh_clone, mesh.translate([5 ,0 ,0]) ,getEigenVectorLines(eigenvalues, eigenvectors).translate([5, 0 ,0]) ,getEigenVectorLines(_val, _vec)])
+    o3d.visualization.draw_geometries([mesh_clone, mesh.translate([5 ,0 ,0]).paint_uniform_color([1,0,0]),getEigenVectorLines(_val, _vec), processAxis()])
 
     return mesh_clone
     

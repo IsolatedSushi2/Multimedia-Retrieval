@@ -166,6 +166,7 @@ def extract_d3(pcd):
     #square root of area of triangle given by 3 random vertices
     #cross gives parallelogram so *0.5 for triangle
     triangleArea = 0.5 * np.cross((pt1-pt2),(pt3-pt2))
+
     hist_d3.append(triangleArea)
 
 

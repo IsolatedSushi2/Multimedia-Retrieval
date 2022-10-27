@@ -1,58 +1,87 @@
-import pandas
+import json
 import numpy as np
-from scipy import stats
+import scipy
 from sklearn.neighbors import NearestNeighbors
 from termcolor import colored
 import random
+import time
 
-def normalizeFeatures():
-    features = pandas.read_csv('./database/features.csv', index_col=[0])
-
-    #https://stackoverflow.com/questions/45834276/numpyzero-mean-data-and-standardization
-    normFeatures = [stats.zscore(np.asarray(features[column])) for column in features.columns]
-
-    normDict = dict(zip(features.columns, normFeatures))
-    normalizedDF = pandas.DataFrame(normDict, index=features.index)
-    normalizedDF.to_csv("./database/normalized_features.csv")
-
-def getNearestNeighours(featureVectors):
-    #Use the brute algorithm in order to access more metrics (doubt the extra computation time will be problematic)
-    nbrs = NearestNeighbors(n_neighbors=10, algorithm='brute', metric="cosine").fit(featureVectors.values)
-
-    return nbrs
+def getSortedNeighbours(queryModel, features, k=10):
     
-def getKNN(nbrs, featureVector):
-    distances, indices = nbrs.kneighbors([featureVector.values])
+    queryVector = features[queryModel]
+    count = 0
+    distances = [(getDistance(queryVector, features[meshPath]), meshPath) for meshPath in features]
+    sortedDistances = sorted(distances, key=lambda tup: tup[0])
 
-    return distances[0], indices[0]
+    for distance, path in sortedDistances[1:1 + k]:
+        correctGuess = isNeighbourCorrect(queryModel, path)
+        if(correctGuess):
+            count += 1
+        color = 'green' if correctGuess else 'red'
+        print(colored(f'With a distance of {distance}. Guessed class {getClassFromPath(path)}', color))
 
-def queryVector(featureVectors, nbrs):
-    index = random.randint(0, len(featureVectors))
-    #index = 79
-    distances, indices = getKNN(nbrs, featureVectors.iloc[index])
-    results = featureVectors.iloc[indices]
+    accuracy = count / k
+    # print(colored(f"Queried for mesh {queryModel}, accuracy {accuracy * 100}%", "yellow"))
+    return accuracy
 
-    basePath = featureVectors.iloc[index].name
-    guessScores = [isNeighbourCorrect(basePath, i) for i in results.index]
+def getDistance(queryVector, otherVector):
+    scalarKeys = ["surfaceArea", "compactness", "rectangularity", "diameter", "eccentricity"]
+    descKeys = ["d1", "d2", "d3", "d4", "a3"]
 
-    print(colored(f'KNN for {basePath}, using the {nbrs.metric} distance', 'yellow'))
-    for i in zip(results.index, distances, guessScores):
-        color = 'green' if i[2] else 'red'
-        print(colored(f'With a distance of {i[1]}. Guessed class {getClassFromPath(i[0])}', color))
-    print(colored(f'{sum(guessScores)} guessses correct out of {len(guessScores)}', 'yellow', attrs=['underline']))
+    queryScalarvector = [queryVector[key] for key in scalarKeys]
+    queryDescvector = [queryVector[key] for key in descKeys]
+
+    otherScalarvector = [otherVector[key] for key in scalarKeys]
+    otherDescvector = [otherVector[key] for key in descKeys]
+
+    scalarDistance = scipy.spatial.distance.euclidean(queryScalarvector, otherScalarvector)
+    descWeights = [100, 100, 100, 100, 100]
+    descDistances = sum([scipy.stats.wasserstein_distance(queryDescvector[i], otherDescvector[i]) * descWeights[i] for i in range(len(queryDescvector))])
+
+    return scalarDistance + descDistances
+# def queryVector(featureVectors, nbrs):
+#     index = random.randint(0, len(featureVectors))
+#     #index = 79
+#     distances, indices = getKNN(nbrs, featureVectors.iloc[index])
+#     results = featureVectors.iloc[indices]
+
+#     basePath = featureVectors.iloc[index].name
+#     guessScores = [isNeighbourCorrect(basePath, i) for i in results.index]
+
+#     print(colored(f'KNN for {basePath}, using the {nbrs.metric} distance', 'yellow'))
+#     for i in zip(results.index, distances, guessScores):
+#         color = 'green' if i[2] else 'red'
+#         print(colored(f'With a distance of {i[1]}. Guessed class {getClassFromPath(i[0])}', color))
+#     print(colored(f'{sum(guessScores)} guessses correct out of {len(guessScores)}', 'yellow', attrs=['underline']))
 
 def getClassFromPath(path):
-    return path.split('\\')[-2]
+    return str(path).split('\\')[-2]
 
 def isNeighbourCorrect(basePath, nnPath):
     return getClassFromPath(basePath) == getClassFromPath(nnPath)
 
-def main():
-    normalizeFeatures()
+def queryAllVectors(k, features):
+    t = time.time()
+    distances = [getSortedNeighbours("models_final\\Airplane\\64.off", features, k) ]
+    # distances = [getSortedNeighboursFaiss(queryModel, features, k) for queryModel in features]
+    print(colored(f"Queried {len(distances)} meshes with k={k}, with an average accuracy of {np.mean(distances)} which took {time.time() - t} seconds", "red"))
 
-    featureVectors = pandas.read_csv('./database/normalized_features.csv', index_col=[0])
-    nbrs = getNearestNeighours(featureVectors)
-    queryVector(featureVectors, nbrs)
+def getFeatureVectors(n, features):
+
+    returnDict = {}
+    for i in range(n):
+        index = i % len(features)
+        filename = list(features.keys())[index] + "copy" * int(i / len(features))
+        returnDict[filename] = list(features.values())[index]
+    return returnDict
+
+def main():
+    with open("./database/normalized_features.json", "r") as read_content:
+        features = json.load(read_content)
+
+    k = 10
+    getSortedNeighbours("models_final\\Airplane\\64.off", features, k)
+
 
 if __name__ == "__main__":
     main()

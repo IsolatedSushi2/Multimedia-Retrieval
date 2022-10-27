@@ -1,36 +1,21 @@
-import numpy as np
-# generate a matrix (3, n_points) for 3D points
-# row 0 == x-coordinate
-# row 1 == y-coordinate
-# row 2 == z-coordinate
+import json 
+import pandas
+from FeatureExtractor import extractFeatures
 
-n_points = 10
+# Opening JSON file
+with open('./BinnedHistValues/binnedHistValues.json',) as f:
+    # returns JSON object as 
+    # a dictionary
+    binnedDatadata = json.load(f)
 
-x_coords = np.random.uniform(9, 10, n_points)
-y_coords = np.random.uniform(-3, -4, n_points)
-z_coords = np.random.uniform(-1, 1, n_points)
+featureVectors = pandas.read_csv('./database/features.csv', index_col=[0])
 
-A = np.zeros((3, n_points))
-A[0] = x_coords
-A[1] = y_coords
-A[2] = z_coords
+featureDict = {}
 
-print(A)
-print(A.shape)
+for row in binnedDatadata:
+    featureDict[row["path"]] = {"d1": row["d1"], "d2": row["d2"], "d3": row["d3"], "d4": row["d4"], "a3": row["a3"]}
+    featureDict[row["path"]] = {**extractFeatures(row["path"]), **featureDict[row["path"]]}
+    print(row["path"])
 
-# compute the covariance matrix for A 
-# see the documentation at 
-# https://docs.scipy.org/doc/numpy/reference/generated/numpy.cov.html
-# this function expects that each row of A represents a variable, 
-# and each column a single observation of all those variables
-A_cov = np.cov(A)  # 3x3 matrix
-
-# computes the eigenvalues and eigenvectors for the 
-# covariance matrix. See documentation at  
-# https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.eig.html 
-eigenvalues, eigenvectors = np.linalg.eig(A_cov)
-
-print("==> eigenvalues for (x, y, z)")
-print(eigenvalues)
-print("\n==> eigenvectors")
-print(eigenvectors)
+with open('result.json', 'w') as fp:
+    json.dump(featureDict, fp)
