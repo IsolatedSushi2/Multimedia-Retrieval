@@ -68,7 +68,7 @@ def calculateConfusionMatrix(features, k=10):
 def main():
     # with open("./database/normalized_features.json", "r") as read_content:
     #     features = json.load(read_content)
-    # y_true, y_pred = calculateConfusionMatrix(features, k=10)
+    # y_true, y_pred = calculateConfusionMatrix(features, k=5)
     # labels = []
     # [labels.append(x) for x in y_true if x not in labels]
     # array = confusion_matrix(y_true, y_pred, labels=labels) # preferably y_true if all occur
@@ -101,7 +101,7 @@ def main():
     x_dim = len(array)
     df_cm = pd.DataFrame(array, range(x_dim), range(x_dim))
     sn.set(font_scale=1) # for label size
-    sn.heatmap(df_cm, annot=True, annot_kws={"size": 10},fmt='d', xticklabels=labels, yticklabels=labels)
+    sn.heatmap(df_cm, cmap="blues", annot=True, annot_kws={"size": 10},fmt='d', xticklabels=labels, yticklabels=labels)
 
     print(df_cm)
     print(labels)
