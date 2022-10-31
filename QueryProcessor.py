@@ -36,8 +36,10 @@ def getDistance(queryVector, otherVector):
 
     scalarDistance = scipy.spatial.distance.euclidean(queryScalarvector, otherScalarvector)
     descWeights = [100, 100, 100, 100, 100]
-    descDistances = sum([scipy.stats.wasserstein_distance(queryDescvector[i], otherDescvector[i]) * descWeights[i] for i in range(len(queryDescvector))])
 
+
+    descDistances = sum([scipy.stats.wasserstein_distance(queryDescvector[i], otherDescvector[i]) * descWeights[i] for i in range(len(queryDescvector))])
+    print(scalarDistance, descDistances)
     return scalarDistance + descDistances
 # def queryVector(featureVectors, nbrs):
 #     index = random.randint(0, len(featureVectors))
