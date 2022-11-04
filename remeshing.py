@@ -3,12 +3,9 @@ import pymeshlab
 ms = pymeshlab.MeshSet()
 
 import math
-import random
 
 import histograms as hist
 import csv_file
-import matplotlib.pyplot as plt
-import numpy as np
 
 # Step 2.1: Analyzing a single shape
 # Start building a simple filter that checks all shapes in the database. The filter should output, for each shape
@@ -76,55 +73,6 @@ def remesh(original_folder, remesh_folder):
     hist.make_histogram(vertices_after,  'Vertices after remeshing',  'Frequency')
     # We can always make these histograms afterwards, without having to do this all again.
     # That's why we save the models! Just read them from file and print it. Way quicker.
-
-
-
-
-
-
-
-
-
-
-def TryValues():
-    all_paths = hist.getAllPaths('\labeledDB')
-    # this gets all the full paths leading to an .off file within a folder.
-
-    which = []
-    amount = 60
-    for i in range(amount):
-        i = random.randint(0,len(all_paths)-1)
-        path = all_paths[i]
-        which.append(path)
-    bins = math.floor(math.sqrt(amount))
-
-    vertices = []
-    for p in range(4):
-        pc = p/2+0.5 # 0.5, 1, 1.5, 2
-        print("p=",pc)
-        vertices.append([])
-        for i in range(amount):
-            path = which[i]
-            ms.clear() # to make sure we don't apply the filter to all previous meshes too
-            ms.load_new_mesh(path)
-            m = ms.current_mesh()
-            ms.apply_filter('meshing_isotropic_explicit_remeshing', iterations=3, targetlen=pymeshlab.Percentage(pc))
-            after = m.vertex_number()
-            vertices[p].append(after)
-
-            if i % bins == 0:
-                print(f"{i} done")
-
-        y,_ = np.histogram(a=vertices[p], bins=bins)
-        plt.plot([(i+0.5)*bins for i in range(bins)], y, label=f"targetlen={pc}") # plot them
-
-    print(vertices)
-    plt.xlabel(f"Vertex-count after remeshing")
-    plt.ylabel("Frequency")
-    plt.savefig(f"targetlen_tryout.png")
-    plt.legend()
-    plt.show()
-
 
 
 def printVertices(folder):

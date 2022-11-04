@@ -4,27 +4,47 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 from QueryProcessor import getClassFromPath
 import seaborn as sns
-with open("./database/normalized_features.json", "r") as read_content:
+import ANN
+
+def createTSNEObject(data, n_components=2):
+    X_embedded = TSNE(n_components=n_components, method="exact", learning_rate='auto',
+                  init='random', perplexity=40).fit_transform(data)
+
+    return X_embedded
+
+def plotTSNE(X_embedded, classes):
+    palette = sns.color_palette(None, len(set(classes)))
+    colorMapper = dict(zip(set(classes), palette))
+    x = X_embedded[:, 0]
+    y = X_embedded[:, 1]
+    plt.scatter(x, y, c =[colorMapper[currClass] for currClass in classes],s=100)
+    plt.show()
+
+#Create the main function
+def main():
+    with open("./database/normalized_features.json", "r") as read_content:
         features = json.load(read_content)
 
-data = []
-classes = [getClassFromPath(path) for path in features]
-# print(classes)
-for filename in features:
-    row = features[filename]
-    values = list(row.values())
-    flat_list = values[:5] + [item for sublist in values[5:] for item in sublist]
-    data.append(flat_list)
+    # Get all the data
+    allData = [ANN.featureToVector(features[filename]) for filename in features]
+    data = np.array(allData)
+    classes = [getClassFromPath(path) for path in features]
 
-data = np.array(data)
+    # Perform an ANN with the dimension reduction
+    dimensions = 10
+    X_embedded_10n = createTSNEObject(data, dimensions)
+    annIndex = ANN.createAnnoyIndex(X_embedded_10n, dimensions)
+    index = ANN.getIndexFromFileName("models_final\\Airplane\\64.off", features)
+    neighbours = ANN.queryAnnoyIndex(annIndex, X_embedded_10n[index])
+    ANN.printQueryResults(neighbours, features)
 
-X_embedded = TSNE(n_components=2, learning_rate='auto',
-                  init='random', perplexity=40).fit_transform(data)
-palette = sns.color_palette(None, len(set(classes)))
-colorMapper = dict(zip(set(classes), palette))
-print(colorMapper)
-print(palette)
-x = X_embedded[:, 0]
-y = X_embedded[:, 1]
-plt.scatter(x, y, c =[colorMapper[currClass] for currClass in classes],s=100)
-plt.show()
+
+
+    # Plot the 2d TSNE dimension reduction
+    x_embedded_2n = createTSNEObject(data, 2)
+    plotTSNE(x_embedded_2n, classes)
+
+
+
+if __name__ == "__main__":
+    main()

@@ -2,6 +2,7 @@ from fileinput import filename
 import tkinter as tk
 import os
 from tkinter import filedialog
+from tkinter import ttk
 from MultiView import *
 from QueryProcessorDemo import *
 
@@ -9,12 +10,16 @@ from QueryProcessorDemo import *
 fileLocation = "unknown"
 init = True
 meshlist = []
+distanceMeasure = 'F'
 def get_current_value():
     return '{: .2f}'.format(current_value.get())
 
 
 def slider_changed(event):
     current_value_label.configure(text=('Current Value for K:', get_current_value()))
+
+def distValueUpdate(event):
+    distmeasure.get()
 
 def addFile():
     global fileLocation
@@ -24,7 +29,7 @@ def addFile():
     fileLocation = os.path.relpath(fileLocation, base_path)
 
 
-def runO3dApp():
+def runApp():
     global init
     global meshlist
     y = 1
@@ -35,16 +40,27 @@ def runO3dApp():
         curval = current_value.get()
         print("running on: ", fileLocation)
         print("current K = ", curval)
-        guesslist, acc, meshlist = mainProcess(fileLocation, curval)
-        meshlist = meshlist
-        for x in range(len(guesslist)):
-            mylist.insert((x+1+(y*100)), guesslist[x])
-        mylist.insert((x+1+(y*100)+19), ("Accuracy: ", acc))
-        mylist.insert((x+1+(y*100)+20),"=====================================")
-        y+=1
-        o3d.visualization.draw_geometries(meshlist)
+        if distmeasure.get() == 'F':    
+            guesslist, acc, meshlist = mainProcess(fileLocation, curval)
+            for x in range(len(guesslist)):
+                mylist.insert((x+1+(y*100)), guesslist[x])
+            mylist.insert((x+1+(y*100)+19), ("Accuracy: ", acc))
+            mylist.insert((x+1+(y*100)+20),"=====================================")
+            y+=1
+        elif distmeasure.get() == 'ANN':
+            print("ANN PART")
+        elif distmeasure.get() == 'DR + ANN':
+            print("DR + ANN PART")
+        else:
+            print("Something weird happend")
+        
+        
     
-
+def runO3d():
+    if meshlist == []:
+        mylist.insert(1, "error no Meshes to show RUN app first")
+    else:
+        o3d.visualization.draw_geometries(meshlist)
 
     
 # root window
@@ -58,9 +74,13 @@ openFile = tk.Button(root, text="Open File", padx=25,
                     pady=5, fg="white", bg="black", anchor="s", command=addFile)
 
 runApp = tk.Button(root, text="Run", padx=25,
-                    pady=5, fg="white", bg="black", anchor="s", command=runO3dApp)
-openFile.place(x=10,y=600)
-runApp.place(x=10, y=650)
+                    pady=5, fg="white", bg="black", anchor="s", command=runApp)
+
+o3dView = tk.Button(root, text="3dView", padx=25,
+                    pady=5, fg="white", bg="black", anchor="s", command=runO3d)
+openFile.place(x=10,y=570)
+runApp.place(x=10, y=610)
+o3dView.place(x=10, y=650)
 
 # label for the slider
 slider_label = tk.Label(root, text='K nearest slider:')
@@ -83,12 +103,17 @@ myscroll.config(command = mylist.yview)
 mylist.pack(side = tk.RIGHT, fill = tk.BOTH) #change
 myscroll.config(command = mylist.yview) 
 
-#choose box
-choices = ['F', 'ANN', 'DR + ANN']
+#distance choice box lable
+distfunc_label = tk.Label(root, text='Distfunction:')
+distfunc_label.place(x=10, y=90)
+
+#distance choice box
 distmeasure = tk.StringVar(root)
 distmeasure.set('F')
-
-#w = tk.Combobox(root, textvariable=choices)
-#w.place(x=25, y=90)
-
+dist_cb = ttk.Combobox(root, textvariable=distmeasure, width=15)
+choices = ['F', 'ANN', 'DR + ANN']
+dist_cb['values'] = choices
+dist_cb['state'] = 'readonly'
+dist_cb.place(x=100, y=90)
+dist_cb.bind('<<ComboboxSelected>>', distValueUpdate)
 root.mainloop()

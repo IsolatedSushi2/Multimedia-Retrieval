@@ -35,6 +35,7 @@ def getDistance(queryVector, otherVector):
     otherScalarvector = [otherVector[key] for key in scalarKeys]
     otherDescvector = [otherVector[key] for key in descKeys]
 
+
     #scalarweights: surfaceArea, compactness, rectangularity, diameter, eccentricity]
     scalarWeights = [2,2,1,1.2,50]
     scalarDistance = [scipy.spatial.distance.euclidean(queryScalarvector[i], otherScalarvector[i]) * scalarWeights[i] for i in range(len(queryScalarvector))]
@@ -42,6 +43,7 @@ def getDistance(queryVector, otherVector):
     descDistances = [scipy.stats.wasserstein_distance(queryDescvector[i], otherDescvector[i]) * descWeights[i] for i in range(len(queryDescvector))]
     #print(scalarDistance)
     #print(descDistances)
+
     return scalarDistance + descDistances
 
 # def queryVector(featureVectors, nbrs):

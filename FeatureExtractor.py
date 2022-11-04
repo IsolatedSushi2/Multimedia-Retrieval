@@ -119,7 +119,7 @@ def getApproximatedVolume(mesh):
 
 def getTetraVolumeFromFace(face, mesh):
     vertices = np.array(mesh.vertices)[np.array(face)]
-    return np.dot(vertices[0], np.cross(vertices[1], vertices[2])) / 6
+    return np.abs(np.dot(vertices[0], np.cross(vertices[1], vertices[2]))) / 6
 
 
 def getConvexHullVolume(mesh):
