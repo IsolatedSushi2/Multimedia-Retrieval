@@ -1,15 +1,31 @@
 import json
+from attr import NOTHING
 import numpy as np
 import scipy
 from sklearn.neighbors import NearestNeighbors
 from termcolor import colored
 import random
 import time
+import open3d as o3d
+
+def viewMesh(path, meshnr):
+    mesh = o3d.io.read_triangle_mesh(".\\" + str(path))
+    mesh.translate([(3*(meshnr%8)) ,-(3*(int(meshnr/8))) ,0])
+    if meshnr == 0:
+        mesh.paint_uniform_color([1,0,0])
+        #label it (Query Target)
+    else:
+        #label it (distance value: distval)
+        NOTHING       
+    return mesh
+
 
 def getSortedNeighbours(queryModel, features, k=10):
-    
+    guessList = []
+    o3dList = []
+    o3dList.append(queryModel)
     queryVector = features[queryModel]
-    count = 0   
+    count = 0
     distances = [(sum(getDistance(queryVector, features[meshPath])), meshPath) for meshPath in features]
     sortedDistances = sorted(distances, key=lambda tup: tup[0])
 
@@ -20,10 +36,19 @@ def getSortedNeighbours(queryModel, features, k=10):
         color = 'green' if correctGuess else 'red'
         print(colored(f'With a distance of {distance}. Guessed class {getClassFromPath(path)}', color))
         print(getDistance(queryVector, features[path]))
+        guessList.append(["With a distance of: ", distance, "Guessed class:  ", getClassFromPath(path)])
+        o3dList.append(path)
+    
+    meshlist = []
+    meshnr = 0
+    for path in o3dList:
+        transmesh = viewMesh(path, meshnr)
+        meshnr +=1
+        meshlist.append(transmesh)  
 
     accuracy = count / k
     print(colored(f"Queried for mesh {queryModel}, accuracy {accuracy * 100}%", "yellow"))
-    return accuracy
+    return guessList, accuracy, meshlist
 
 def getDistance(queryVector, otherVector):
     scalarKeys = ["surfaceArea", "compactness", "rectangularity", "diameter", "eccentricity"]
@@ -36,14 +61,15 @@ def getDistance(queryVector, otherVector):
     otherDescvector = [otherVector[key] for key in descKeys]
 
     #scalarweights: surfaceArea, compactness, rectangularity, diameter, eccentricity]
-    scalarWeights = [2,2,1,1.2,50]
+    scalarWeights = [2,2,1,1.2,40]
     scalarDistance = [scipy.spatial.distance.euclidean(queryScalarvector[i], otherScalarvector[i]) * scalarWeights[i] for i in range(len(queryScalarvector))]
-    descWeights = [100, 200, 100, 100, 100]
+    descWeights = [800, 1000, 800, 600, 400]
     descDistances = [scipy.stats.wasserstein_distance(queryDescvector[i], otherDescvector[i]) * descWeights[i] for i in range(len(queryDescvector))]
+    
+
     #print(scalarDistance)
     #print(descDistances)
     return scalarDistance + descDistances
-
 # def queryVector(featureVectors, nbrs):
 #     index = random.randint(0, len(featureVectors))
 #     #index = 79
@@ -65,11 +91,6 @@ def getClassFromPath(path):
 def isNeighbourCorrect(basePath, nnPath):
     return getClassFromPath(basePath) == getClassFromPath(nnPath)
 
-def queryAllVectors(k, features):
-    t = time.time()
-    distances = [getSortedNeighbours("models_final\\Airplane\\64.off", features, k) ]
-    # distances = [getSortedNeighboursFaiss(queryModel, features, k) for queryModel in features]
-    print(colored(f"Queried {len(distances)} meshes with k={k}, with an average accuracy of {np.mean(distances)} which took {time.time() - t} seconds", "red"))
 
 def getFeatureVectors(n, features):
 
@@ -80,13 +101,13 @@ def getFeatureVectors(n, features):
         returnDict[filename] = list(features.values())[index]
     return returnDict
 
-def main():
+def mainProcess(filepath, k):
     with open("./database/normalized_features.json", "r") as read_content:
         features = json.load(read_content)
-
-    k = 10
-    getSortedNeighbours("models_final\\Cup\\21.off", features, k)
+    # "models_final\\Cup\\21.off"
+    guesslist, acc, meshlist = getSortedNeighbours(filepath, features, int(k))
+    return guesslist, acc, meshlist
 
 
 if __name__ == "__main__":
-    main()
+    mainProcess("models_final\\Cup\\21.off", 5)
