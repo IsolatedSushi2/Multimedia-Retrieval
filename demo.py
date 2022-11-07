@@ -12,6 +12,8 @@ from DRDemo import *
 fileLocation = "unknown"
 init = True
 meshlist = []
+classes = None
+X_embedded = None
 distanceMeasure = 'F'
 y = 1
 
@@ -37,6 +39,8 @@ def runApp():
     global init
     global meshlist
     global y
+    global X_embedded
+    global classes
     acc = 0
     if fileLocation == "unknown":
         print("error no file")
@@ -50,7 +54,7 @@ def runApp():
         elif distmeasure.get() == 'ANN':
             guesslist, acc, meshlist = ANNProcess(fileLocation, curval)
         elif distmeasure.get() == 'DR + ANN':
-            guesslist, acc, meshlist = DRDemo(fileLocation, curval)
+            guesslist, acc, meshlist, X_embedded, classes = DRDemo(fileLocation, curval)
         else:
             print("Something weird happend")
         for x in range(len(guesslist)):
@@ -67,7 +71,13 @@ def runO3d():
     else:
         o3d.visualization.draw_geometries(meshlist)
 
-    
+def runPlot():
+    if classes is None:
+        mylist.insert(1, "error no TSNE to plot RUN DR first")
+    else:
+        plotTSNE(X_embedded, classes)
+
+#the UI
 # root window
 root = tk.Tk()
 root.geometry('700x700')
@@ -78,14 +88,19 @@ current_value = tk.IntVar()
 openFile = tk.Button(root, text="Open File", padx=25,
                     pady=5, fg="white", bg="black", anchor="s", command=addFile)
 
-runApp = tk.Button(root, text="Run", padx=25,
+runAppBut = tk.Button(root, text="Run", padx=25,
                     pady=5, fg="white", bg="black", anchor="s", command=runApp)
 
 o3dView = tk.Button(root, text="3dView", padx=25,
                     pady=5, fg="white", bg="black", anchor="s", command=runO3d)
-openFile.place(x=10,y=570)
-runApp.place(x=10, y=610)
-o3dView.place(x=10, y=650)
+
+TsnePlot = tk.Button(root, text="TsnePlot", padx=25,
+                    pady=5, fg="white", bg="black", anchor="s",command=runPlot)
+
+openFile.place(x=10,y=540)
+runAppBut.place(x=10, y=580)
+o3dView.place(x=10, y=620)
+TsnePlot.place(x=10,y=660)
 
 # label for the slider
 slider_label = tk.Label(root, text='K nearest slider:')

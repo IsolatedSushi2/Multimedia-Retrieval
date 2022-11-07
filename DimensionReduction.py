@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from QueryProcessor import getClassFromPath
 import seaborn as sns
 import ANN
+import colorcet as cc
 from collections import defaultdict
 
 def createTSNEObject(data, n_components=2):
@@ -53,7 +54,7 @@ def main():
 
 
 
-    # Plot the 2d TSNE dimension reduction
+    #Plot the 2d TSNE dimension reduction
     x_embedded_2n = createTSNEObject(data, 2)
     plotTSNE(x_embedded_2n, classes)
 

@@ -9,8 +9,8 @@ import time
 def getSortedNeighbours(queryModel, features, k=10):
     
     queryVector = features[queryModel]
-    count = 0   
-    distances = [(sum(getDistance(queryVector, features[meshPath])), meshPath) for meshPath in features]
+    count = 0
+    distances = [(getDistance(queryVector, features[meshPath]), meshPath) for meshPath in features]
     sortedDistances = sorted(distances, key=lambda tup: tup[0])
 
     for distance, path in sortedDistances[1:1 + k]:
@@ -19,7 +19,6 @@ def getSortedNeighbours(queryModel, features, k=10):
             count += 1
         color = 'green' if correctGuess else 'red'
         print(colored(f'With a distance of {distance}. Guessed class {getClassFromPath(path)}', color))
-        print(getDistance(queryVector, features[path]))
 
     accuracy = count / k
     print(colored(f"Queried for mesh {queryModel}, accuracy {accuracy * 100}%", "yellow"))
@@ -35,15 +34,11 @@ def getDistance(queryVector, otherVector):
     otherScalarvector = [otherVector[key] for key in scalarKeys]
     otherDescvector = [otherVector[key] for key in descKeys]
 
+    scalarDistance = scipy.spatial.distance.euclidean(queryScalarvector, otherScalarvector)
+    descWeights = [100, 100, 100, 100, 100]
 
-    #scalarweights: surfaceArea, compactness, rectangularity, diameter, eccentricity]
-    scalarWeights = [2,2,1,1.2,50]
-    scalarDistance = [scipy.spatial.distance.euclidean(queryScalarvector[i], otherScalarvector[i]) * scalarWeights[i] for i in range(len(queryScalarvector))]
-    descWeights = [100, 200, 100, 100, 100]
-    descDistances = [scipy.stats.wasserstein_distance(queryDescvector[i], otherDescvector[i]) * descWeights[i] for i in range(len(queryDescvector))]
-    #print(scalarDistance)
-    #print(descDistances)
 
+    descDistances = sum([scipy.stats.wasserstein_distance(queryDescvector[i], otherDescvector[i]) * descWeights[i] for i in range(len(queryDescvector))])
     return scalarDistance + descDistances
 
 # def queryVector(featureVectors, nbrs):
@@ -82,13 +77,19 @@ def getFeatureVectors(n, features):
         returnDict[filename] = list(features.values())[index]
     return returnDict
 
+
+
 def main():
     with open("./database/normalized_features.json", "r") as read_content:
         features = json.load(read_content)
 
-    k = 10
-    getSortedNeighbours("models_final\\Cup\\21.off", features, k)
+    k = 5
+    tests = ["models_final\\Table\\146.off", "models_final\\Airplane\\64.off", "models_final\\Cup\\21.off"]
 
+
+    for path in features:
+        if(getClassFromPath(path) == "Fish"):
+            getSortedNeighbours(path, features, k)
 
 if __name__ == "__main__":
     main()
