@@ -8,13 +8,14 @@ import matplotlib.pyplot as plt   # plots: for visualizing the data (e.g. histog
 pathList= list(Path('./models_multiview').rglob('*.off'))
 
 
-def Multiview(pathList):
+def multiview(pathList):
     meshlist = []
     meshnr = 0
     for path in pathList:
         transmesh = viewMesh(path, meshnr)
         meshnr +=1
         meshlist.append(transmesh)
+        #print(".\\" + str(path))
     o3d.visualization.draw_geometries(meshlist)    
 
 def viewMesh(path, meshnr):
@@ -23,4 +24,4 @@ def viewMesh(path, meshnr):
     return mesh
 
 if __name__ == "__main__":
-    Multiview(pathList)
+    multiview(pathList)

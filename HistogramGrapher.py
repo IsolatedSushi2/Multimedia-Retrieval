@@ -4,17 +4,17 @@ import numpy as np
 import math
 from pathlib import Path
 
-pathList = list(Path('./database/').rglob('*.json'))
+pathList = list(Path('./database/').rglob('histValues18.json'))
 for path in pathList:
   with open(path, 'r') as f:
     data = json.load(f)
 
 
-  #d1values = np.array([x["d1"] for x in data])
-  #d2values = np.array([x["d2"] for x in data])
-  #d3values = np.array([x["d3"] for x in data])
-  #d4values = np.array([x["d4"] for x in data])
-  a3values = np.array([x["a3"] for x in data])
+  d1values = np.array([x["d1"] for x in data])
+  d2values = np.array([x["d2"] for x in data])
+  d3values = np.array([x["d3"] for x in data])
+  d4values = np.array([x["d4"] for x in data])
+  #a3values = np.array([x["a3"] for x in data])
   classes = [x["class"] for x in data]
   print(classes)
   #Perform so tests in order to check if the calculations were correct
@@ -31,38 +31,49 @@ for path in pathList:
   #print(a3RangeCheck.all())
 
   class_name = classes[1]
+  '''
+  plt.figure()
   for x in range(len(a3values)):
     plt.hist(a3values[x], range=(0, math.pi), bins=int(math.sqrt(len(a3values[x]))), histtype='step')
-    plt.xlabel(f"Values of a3values for class {class_name}") # TODO should e.g. be "D1"
-    plt.ylabel("Frequency")
-    plt.savefig(f"a3_{class_name}.png") # e.g. a3_Airplane.png
+  plt.xlabel(f"Values of a3values for class {class_name}") # TODO should e.g. be "D1"
+  plt.ylabel("Frequency")
+  plt.savefig(f"a3_{class_name}.png") # e.g. a3_Airplane.png
   #plt.show()
-'''
+  plt.close()'''
+
+  plt.figure()
   for x in range(len(d1values)):
     plt.hist(d1values[x], range=(0, 1), bins=int(math.sqrt(len(d1values[x]))), histtype='step')
-    plt.xlabel(f"Values of d1values for class {class_name}") # TODO should e.g. be "D1"
-    plt.ylabel("Frequency")
-    plt.savefig(f"d1_{class_name}.png") # e.g. D1_Airplane.png
-  #plt.show()  
+  plt.xlabel(f"Values of d1values for class {class_name}") # TODO should e.g. be "D1"
+  plt.ylabel("Frequency")
+  plt.savefig(f"d1_{class_name}.png") # e.g. D1_Airplane.png
+  #plt.show() 
+  plt.close()
 
+  plt.figure()
   for x in range(len(d2values)):
     plt.hist(d2values[x], range=(0, np.sqrt(3)), bins=int(math.sqrt(len(d2values[x]))), histtype='step')
-    plt.xlabel(f"Values of d2values for class {class_name}") # TODO should e.g. be "D1"
-    plt.ylabel("Frequency")
-    plt.savefig(f"d2_{class_name}.png") # e.g. D2_Airplane.png
+  plt.xlabel(f"Values of d2values for class {class_name}") # TODO should e.g. be "D1"
+  plt.ylabel("Frequency")
+  plt.savefig(f"d2_{class_name}.png") # e.g. D2_Airplane.png
   #plt.show() 
+  plt.close()
 
+  plt.figure()
   for x in range(len(d3values)):
     plt.hist(d3values[x], range=(0, 1), bins=int(math.sqrt(len(d3values[x]))), histtype='step')
-    plt.xlabel(f"Values of d3values for class {class_name}") # TODO should e.g. be "D1"
-    plt.ylabel("Frequency")
-    plt.savefig(f"d3_{class_name}.png") # e.g. D3_Airplane.png
+  plt.xlabel(f"Values of d3values for class {class_name}") # TODO should e.g. be "D1"
+  plt.ylabel("Frequency")
+  plt.savefig(f"d3_{class_name}.png") # e.g. D3_Airplane.png
   #plt.show()  
+  plt.close()
 
+  plt.figure()
   for x in range(len(d4values)):
     plt.hist(d4values[x], range=(0, 1), bins=int(math.sqrt(len(d4values[x]))), histtype='step')
-    plt.xlabel(f"Values of d4values for class {class_name}") # TODO should e.g. be "D1"
-    plt.ylabel("Frequency")
-    plt.savefig(f"d4_{class_name}.png") # e.g. D4_Airplane.png
+  plt.xlabel(f"Values of d4values for class {class_name}") # TODO should e.g. be "D1"
+  plt.ylabel("Frequency")
+  plt.savefig(f"d4_{class_name}.png") # e.g. D4_Airplane.png
   #plt.show()  
-'''
+  plt.close()
+

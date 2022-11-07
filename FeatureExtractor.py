@@ -11,23 +11,22 @@ import json
 import multiprocessing as mp
 
 Q = mp.Queue()
-
+x = 0
 def extractFeatures(mesh_path):
     mesh = o3d.io.read_triangle_mesh(".\\" + str(mesh_path))
     # print(mesh_path)
     # Features are disabeled for now
     features = {}
     # The 5 scalar features
-    features["surfaceArea"] = mesh.get_surface_area()
-    features["compactness"] = getCompactness(features["surfaceArea"], getApproximatedVolume(mesh))
+    #features["surfaceArea"] = mesh.get_surface_area()
+    #features["compactness"] = getCompactness(features["surfaceArea"], getApproximatedVolume(mesh))
     features["rectangularity"] = getApproximatedVolume(mesh) / mesh.get_axis_aligned_bounding_box().volume()
-    features["diameter"] = getDiameter(mesh.vertices)
-    features["eccentricity"] = getEccentricity(mesh)
+    #features["diameter"] = getDiameter(mesh.vertices)
+    #features["eccentricity"] = getEccentricity(mesh)
 
     # The 5 distribution features on N=100000
-    num_samples = 10
-    points = np.array(mesh.sample_points_uniformly(
-        number_of_points=num_samples).points)
+    #num_samples = 100000
+    #points = np.array(mesh.sample_points_uniformly(number_of_points=num_samples).points)
 
     # d1Values = getD1(points)
     # d2Values = getD2(points)
@@ -44,6 +43,7 @@ def extractFeatures(mesh_path):
     # features["d3"] = binned values
     # features["d4"] = binned values
     # features["a3"] = binned values
+    print("yes?")
     return features
 
 # Get the distance to bary center (which was translated to 0,0,0)
@@ -112,14 +112,19 @@ def getCompactness(surface, volume):
 
 
 def getApproximatedVolume(mesh):
-    tetraVolumes = [getTetraVolumeFromFace(
-        face, mesh) for face in mesh.triangles]
+    print("check1")
+    print(mesh.triangles)
+    tetraVolumes = [getTetraVolumeFromFace(face, mesh) for face in mesh.triangles]#doesn't work???
+    print("CHECK 2")
     return np.sum(tetraVolumes)
 
 
 def getTetraVolumeFromFace(face, mesh):
+    global x
     vertices = np.array(mesh.vertices)[np.array(face)]
-    return np.abs(np.dot(vertices[0], np.cross(vertices[1], vertices[2]))) / 6
+    x +=1
+    print(x)
+    return (np.abs(np.dot(vertices[0], np.cross(vertices[1], vertices[2]))) / 6)
 
 
 def getConvexHullVolume(mesh):
@@ -141,8 +146,9 @@ def log_result(result):
 if __name__ == "__main__":
     pathList = list(Path('./models_final/').rglob('*.off'))
     print(colored(f"Extracting features for {len(pathList)} meshes"))
-    #allFeatures = [extractFeatures(path) for path in pathList]
-    
+    extractFeatures("models_final\\Airplane\\64.off")
+    #allFeatures = [extractFeatures(path) for path in pathList]  
+    '''
     #multi-process Json-Creation of featurefactor
     for i in range(int(380/20)):
         print("start met stap i =" , i)
@@ -154,10 +160,11 @@ if __name__ == "__main__":
             pool.apply_async(extractFeatures, args=(path,), callback = log_result)
         pool.close()
         pool.join()
-        fileloc = "./database/histValues" + str(i) + ".json"
+        fileloc = "./database/Rectangularity" + str(i) + ".json"
         with open(fileloc, 'w') as f:
             json.dump(allFeatures, f)
-
+    '''
+    print(allFeatures)
 #commented out the dataframe panda since this wont be used just yet
 '''       
     dataFrame = pandas.DataFrame(allFeatures, index=pathList)
