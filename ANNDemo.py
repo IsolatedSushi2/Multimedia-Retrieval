@@ -81,7 +81,7 @@ def ANNProcess(filepath, k):
     annoyIndex = createAnnoyIndex(data)
     neighbours = queryAnnoyIndex(annoyIndex, featureToVector(features[filepath]), k+1)
     guesslist, accuracy, meshlist = printQueryResults(neighbours, features, k)
-    
+    print(guesslist)
     return guesslist, accuracy, meshlist
 
 if __name__ == "__main__":

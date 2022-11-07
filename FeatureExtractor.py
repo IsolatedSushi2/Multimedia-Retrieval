@@ -18,6 +18,7 @@ def extractFeatures(mesh_path):
     # Features are disabeled for now
     features = {}
     # The 5 scalar features
+    features["path"] = str(mesh_path)
     #features["surfaceArea"] = mesh.get_surface_area()
     #features["compactness"] = getCompactness(features["surfaceArea"], getApproximatedVolume(mesh))
     features["rectangularity"] = getApproximatedVolume(mesh) / mesh.get_axis_aligned_bounding_box().volume()
@@ -43,7 +44,6 @@ def extractFeatures(mesh_path):
     # features["d3"] = binned values
     # features["d4"] = binned values
     # features["a3"] = binned values
-    print("yes?")
     return features
 
 # Get the distance to bary center (which was translated to 0,0,0)
@@ -112,18 +112,12 @@ def getCompactness(surface, volume):
 
 
 def getApproximatedVolume(mesh):
-    print("check1")
-    print(mesh.triangles)
-    tetraVolumes = [getTetraVolumeFromFace(face, mesh) for face in mesh.triangles]#doesn't work???
-    print("CHECK 2")
+    tetraVolumes = [getTetraVolumeFromFace(face, mesh) for face in np.asarray(mesh.triangles)]#doesn't work???
     return np.sum(tetraVolumes)
 
 
 def getTetraVolumeFromFace(face, mesh):
-    global x
     vertices = np.array(mesh.vertices)[np.array(face)]
-    x +=1
-    print(x)
     return (np.abs(np.dot(vertices[0], np.cross(vertices[1], vertices[2]))) / 6)
 
 
@@ -146,9 +140,8 @@ def log_result(result):
 if __name__ == "__main__":
     pathList = list(Path('./models_final/').rglob('*.off'))
     print(colored(f"Extracting features for {len(pathList)} meshes"))
-    extractFeatures("models_final\\Airplane\\64.off")
     #allFeatures = [extractFeatures(path) for path in pathList]  
-    '''
+    
     #multi-process Json-Creation of featurefactor
     for i in range(int(380/20)):
         print("start met stap i =" , i)
@@ -163,8 +156,7 @@ if __name__ == "__main__":
         fileloc = "./database/Rectangularity" + str(i) + ".json"
         with open(fileloc, 'w') as f:
             json.dump(allFeatures, f)
-    '''
-    print(allFeatures)
+    
 #commented out the dataframe panda since this wont be used just yet
 '''       
     dataFrame = pandas.DataFrame(allFeatures, index=pathList)

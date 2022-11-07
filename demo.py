@@ -6,6 +6,7 @@ from tkinter import ttk
 from MultiView import *
 from QueryProcessorDemo import *
 from ANNDemo import *
+from DRDemo import *
 
 
 fileLocation = "unknown"
@@ -47,10 +48,9 @@ def runApp():
         if distmeasure.get() == 'F':    
             guesslist, acc, meshlist = mainProcess(fileLocation, curval)
         elif distmeasure.get() == 'ANN':
-            print("ANN PART")
             guesslist, acc, meshlist = ANNProcess(fileLocation, curval)
         elif distmeasure.get() == 'DR + ANN':
-            print("DR + ANN PART")
+            guesslist, acc, meshlist = DRDemo(fileLocation, curval)
         else:
             print("Something weird happend")
         for x in range(len(guesslist)):
