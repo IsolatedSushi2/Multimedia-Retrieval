@@ -39,7 +39,6 @@ def getDistance(queryVector, otherVector):
 
 
     descDistances = sum([scipy.stats.wasserstein_distance(queryDescvector[i], otherDescvector[i]) * descWeights[i] for i in range(len(queryDescvector))])
-    print(scalarDistance, descDistances)
     return scalarDistance + descDistances
 # def queryVector(featureVectors, nbrs):
 #     index = random.randint(0, len(featureVectors))
@@ -77,13 +76,19 @@ def getFeatureVectors(n, features):
         returnDict[filename] = list(features.values())[index]
     return returnDict
 
+
+
 def main():
     with open("./database/normalized_features.json", "r") as read_content:
         features = json.load(read_content)
 
     k = 5
-    getSortedNeighbours("models_final\\Cup\\21.off", features, k)
+    tests = ["models_final\\Table\\146.off", "models_final\\Airplane\\64.off", "models_final\\Cup\\21.off"]
 
+
+    for path in features:
+        if(getClassFromPath(path) == "Fish"):
+            getSortedNeighbours(path, features, k)
 
 if __name__ == "__main__":
     main()
