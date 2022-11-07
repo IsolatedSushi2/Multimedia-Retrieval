@@ -10,14 +10,14 @@ import open3d as o3d
 
 def viewMesh(path, meshnr):
     mesh = o3d.io.read_triangle_mesh(".\\" + str(path))
-    mesh.translate([(3*(meshnr%8)) ,-(3*(int(meshnr/8))) ,0])
     if meshnr == 0:
         mesh.paint_uniform_color([1,0,0])
-        #label it (Query Target)
+        mesh.translate([-5,0,0])
     else:
-        #label it (distance value: distval)
-        NOTHING       
+        mesh.translate([(3*((meshnr-1)%8)) ,-(3*(int((meshnr-1)/8))) ,0])
+     
     return mesh
+
 
 
 def getSortedNeighbours(queryModel, features, k=10):
@@ -63,7 +63,7 @@ def getDistance(queryVector, otherVector):
     #scalarweights: surfaceArea, compactness, rectangularity, diameter, eccentricity]
     scalarWeights = [2,2,1,1.2,40]
     scalarDistance = [scipy.spatial.distance.euclidean(queryScalarvector[i], otherScalarvector[i]) * scalarWeights[i] for i in range(len(queryScalarvector))]
-    descWeights = [800, 1000, 800, 600, 400]
+    descWeights = [100, 400, 200, 100, 100]
     descDistances = [scipy.stats.wasserstein_distance(queryDescvector[i], otherDescvector[i]) * descWeights[i] for i in range(len(queryDescvector))]
     
 

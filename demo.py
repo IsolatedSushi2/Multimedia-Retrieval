@@ -5,12 +5,15 @@ from tkinter import filedialog
 from tkinter import ttk
 from MultiView import *
 from QueryProcessorDemo import *
+from ANNDemo import *
 
 
 fileLocation = "unknown"
 init = True
 meshlist = []
 distanceMeasure = 'F'
+y = 1
+
 def get_current_value():
     return '{: .2f}'.format(current_value.get())
 
@@ -32,7 +35,8 @@ def addFile():
 def runApp():
     global init
     global meshlist
-    y = 1
+    global y
+    acc = 0
     if fileLocation == "unknown":
         print("error no file")
         mylist.insert(1, "error no file selected")
@@ -42,17 +46,18 @@ def runApp():
         print("current K = ", curval)
         if distmeasure.get() == 'F':    
             guesslist, acc, meshlist = mainProcess(fileLocation, curval)
-            for x in range(len(guesslist)):
-                mylist.insert((x+1+(y*100)), guesslist[x])
-            mylist.insert((x+1+(y*100)+19), ("Accuracy: ", acc))
-            mylist.insert((x+1+(y*100)+20),"=====================================")
-            y+=1
         elif distmeasure.get() == 'ANN':
             print("ANN PART")
+            guesslist, acc, meshlist = ANNProcess(fileLocation, curval)
         elif distmeasure.get() == 'DR + ANN':
             print("DR + ANN PART")
         else:
             print("Something weird happend")
+        for x in range(len(guesslist)):
+            mylist.insert((x+1+(y*100)), guesslist[x])
+        mylist.insert((x+1+(y*100)+19), ("Accuracy: ", acc))
+        mylist.insert((x+1+(y*100)+20),"=====================================")
+        y+=1
         
         
     
