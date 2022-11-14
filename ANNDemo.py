@@ -2,6 +2,8 @@ import annoy
 import json
 import numpy as np
 import open3d as o3d
+import matplotlib.pylab as plt
+from FeatureExtractorDemo import *
 # Setup the annoy index
 
 # Create a function to create the annoy index
@@ -73,16 +75,20 @@ def printQueryResults(neighbours, features, k):
 
     return guessList, accuracy, meshlist
 
-def ANNProcess(filepath, k):
+def ANNProcess(filepath, k, Filebool):
     with open("./database/normalized_features.json", "r") as read_content:
         features = json.load(read_content)
 
     data = [featureToVector(feature) for feature in features.values()]
     annoyIndex = createAnnoyIndex(data)
-    neighbours = queryAnnoyIndex(annoyIndex, featureToVector(features[filepath]), k+1)
+
+    if Filebool == 0:
+        neighbours = queryAnnoyIndex(annoyIndex, featureToVector(features[filepath]), k+1)
+    else:
+        neighbours = queryAnnoyIndex(annoyIndex, featureToVector(extractFeatures(filepath)), k+1)
+
     guesslist, accuracy, meshlist = printQueryResults(neighbours, features, k)
-    print(guesslist)
     return guesslist, accuracy, meshlist
 
 if __name__ == "__main__":
-    ANNProcess("models_final\\Airplane\\64.off", 10)
+    ANNProcess("models_final\\Airplane\\64.off", 10, 1)

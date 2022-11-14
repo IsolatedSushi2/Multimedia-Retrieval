@@ -7,6 +7,7 @@ from termcolor import colored
 import random
 import time
 import open3d as o3d
+from FeatureExtractorDemo import *
 
 def viewMesh(path, meshnr):
     mesh = o3d.io.read_triangle_mesh(".\\" + str(path))
@@ -20,11 +21,16 @@ def viewMesh(path, meshnr):
 
 
 
-def getSortedNeighbours(queryModel, features, k=10):
+def getSortedNeighbours(queryModel, features, Filebool, k=10):
     guessList = []
     o3dList = []
     o3dList.append(queryModel)
-    queryVector = features[queryModel]
+
+    if Filebool == 0:
+        queryVector = features[queryModel]
+    else:
+        queryVector = extractFeatures(queryModel)
+        print("query Extracted")
     count = 0
     distances = [(sum(getDistance(queryVector, features[meshPath])), meshPath) for meshPath in features]
     sortedDistances = sorted(distances, key=lambda tup: tup[0])
@@ -63,7 +69,7 @@ def getDistance(queryVector, otherVector):
     #scalarweights: surfaceArea, compactness, rectangularity, diameter, eccentricity]
     scalarWeights = [2,2,1,1.2,40]
     scalarDistance = [scipy.spatial.distance.euclidean(queryScalarvector[i], otherScalarvector[i]) * scalarWeights[i] for i in range(len(queryScalarvector))]
-    descWeights = [100, 400, 200, 100, 100]
+    descWeights = [100, 200, 200, 100, 100]
     descDistances = [scipy.stats.wasserstein_distance(queryDescvector[i], otherDescvector[i]) * descWeights[i] for i in range(len(queryDescvector))]
     
 
@@ -101,13 +107,13 @@ def getFeatureVectors(n, features):
         returnDict[filename] = list(features.values())[index]
     return returnDict
 
-def mainProcess(filepath, k):
+def mainProcess(filepath, k, Filebool):
     with open("./database/normalized_features.json", "r") as read_content:
         features = json.load(read_content)
     # "models_final\\Cup\\21.off"
-    guesslist, acc, meshlist = getSortedNeighbours(filepath, features, int(k))
+    guesslist, acc, meshlist = getSortedNeighbours(filepath, features, Filebool, int(k))
     return guesslist, acc, meshlist
 
 
 if __name__ == "__main__":
-    mainProcess("models_final\\Cup\\21.off", 5)
+    mainProcess("models_final\\Airplane\\70.off", 5, 0)

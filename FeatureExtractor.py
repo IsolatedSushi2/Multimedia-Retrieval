@@ -19,11 +19,12 @@ def extractFeatures(mesh_path):
     features = {}
     # The 5 scalar features
     features["path"] = str(mesh_path)
-    #features["surfaceArea"] = mesh.get_surface_area()
-    #features["compactness"] = getCompactness(features["surfaceArea"], getApproximatedVolume(mesh))
+    surfaceArea = mesh.get_surface_area()
+    features["surfaceArea"] = surfaceArea
+    features["compactness"] = getCompactness(surfaceArea, getApproximatedVolume(mesh))
     features["rectangularity"] = getApproximatedVolume(mesh) / mesh.get_axis_aligned_bounding_box().volume()
-    #features["diameter"] = getDiameter(mesh.vertices)
-    #features["eccentricity"] = getEccentricity(mesh)
+    features["diameter"] = getDiameter(mesh.vertices)
+    features["eccentricity"] = getEccentricity(mesh)
 
     # The 5 distribution features on N=100000
     #num_samples = 100000
@@ -140,8 +141,9 @@ def log_result(result):
 if __name__ == "__main__":
     pathList = list(Path('./models_final/').rglob('*.off'))
     print(colored(f"Extracting features for {len(pathList)} meshes"))
-    #allFeatures = [extractFeatures(path) for path in pathList]  
+    allFeatures = [extractFeatures(path) for path in pathList]  
     
+    '''
     #multi-process Json-Creation of featurefactor
     for i in range(int(380/20)):
         print("start met stap i =" , i)
@@ -154,8 +156,9 @@ if __name__ == "__main__":
         pool.close()
         pool.join()
         fileloc = "./database/Rectangularity" + str(i) + ".json"
-        with open(fileloc, 'w') as f:
-            json.dump(allFeatures, f)
+    '''
+    with open("./database/Scalars", 'w') as f:
+        json.dump(allFeatures, f)
     
 #commented out the dataframe panda since this wont be used just yet
 '''       

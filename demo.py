@@ -47,12 +47,14 @@ def runApp():
         mylist.insert(1, "error no file selected")
     else:
         curval = current_value.get()
+        FileboolVal = Filebool.get()
         print("running on: ", fileLocation)
         print("current K = ", curval)
+        mylist.insert((1+(y*100)-1), ("running On file", fileLocation, "with current K = ", curval))
         if distmeasure.get() == 'F':    
-            guesslist, acc, meshlist = mainProcess(fileLocation, curval)
+            guesslist, acc, meshlist = mainProcess(fileLocation, curval, FileboolVal)
         elif distmeasure.get() == 'ANN':
-            guesslist, acc, meshlist = ANNProcess(fileLocation, curval)
+            guesslist, acc, meshlist = ANNProcess(fileLocation, curval, FileboolVal)
         elif distmeasure.get() == 'DR + ANN':
             guesslist, acc, meshlist, X_embedded, classes = DRDemo(fileLocation, curval)
         else:
@@ -66,14 +68,18 @@ def runApp():
         
     
 def runO3d():
+    global y
     if meshlist == []:
-        mylist.insert(1, "error no Meshes to show RUN app first")
+        mylist.insert((y*100), "error no Meshes to show RUN app first")
+        mylist.insert(((y*100)+1),"=====================================")
     else:
         o3d.visualization.draw_geometries(meshlist)
 
 def runPlot():
+    global y
     if classes is None:
-        mylist.insert(1, "error no TSNE to plot RUN DR first")
+        mylist.insert((y*100), "error no TSNE to plot RUN DR first")
+        mylist.insert(((y*100)+1),"=====================================")
     else:
         plotTSNE(X_embedded, classes)
 
@@ -136,4 +142,10 @@ dist_cb['values'] = choices
 dist_cb['state'] = 'readonly'
 dist_cb.place(x=100, y=90)
 dist_cb.bind('<<ComboboxSelected>>', distValueUpdate)
+
+#add checkbox for file or DB
+Filebool = tk.IntVar()
+Filebox = tk.Checkbutton(root, text='Read Vector from File (not on DR)',variable=Filebool, onvalue=1, offvalue=0)
+Filebox.place(x=10, y=150)
+
 root.mainloop()
