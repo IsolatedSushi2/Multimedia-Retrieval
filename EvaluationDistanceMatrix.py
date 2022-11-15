@@ -1,7 +1,6 @@
 # Evaluation
 
 import QueryProcessor as query
-from sklearn.metrics import confusion_matrix
 
 import numpy as np
 import seaborn as sn
@@ -12,7 +11,7 @@ import os.path
 
 def distanceSortedNeighbours(queryModel, features):
     queryVector = features[queryModel]
-    distances = [query.getDistance(queryVector, features[meshPath]) for meshPath in features]
+    distances = [sum(query.getDistance(queryVector, features[meshPath])) for meshPath in features]
     return distances
 
 

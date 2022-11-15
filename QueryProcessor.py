@@ -37,6 +37,7 @@ def getDistance(queryVector, otherVector):
     scalarDistance = scipy.spatial.distance.euclidean(queryScalarvector, otherScalarvector)
     descWeights = [100, 100, 100, 100, 100]
 
+    # scalarDistance = [scipy.spatial.distance.euclidean([queryScalarvector[i]], [otherScalarvector[i]]) * scalarWeights[i] for i in range(len(queryScalarvector))]
 
     descDistances = sum([scipy.stats.wasserstein_distance(queryDescvector[i], otherDescvector[i]) * descWeights[i] for i in range(len(queryDescvector))])
     return scalarDistance + descDistances

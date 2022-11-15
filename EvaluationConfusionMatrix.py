@@ -1,12 +1,17 @@
 # Evaluation
 
 import QueryProcessor as query
-from sklearn.metrics import confusion_matrix
+import ANN
+import DimensionReduction as DR
 
+from sklearn.metrics import confusion_matrix
+import numpy as np
 import seaborn as sn
 import pandas as pd
 import matplotlib.pyplot as plt
 import json
+
+from enum import Enum
 
 # How does sklearn confusion_matrix work?
 # We want to check, for every mesh, what shapes pop up when we retrieve K shapes (e.g. 5 or 10).
@@ -30,8 +35,39 @@ import json
 # accuracy. Something like:
 
 
-def classifySortedNeighbours(queryModel, features, k=10):
-    
+# 'queryModel' is a string, e.g. "models_final\\Airplane\\64.off" used as key for the dict 'features'.
+def classifySortedNeighboursANN(queryModel, features, k, annoyIndex):
+    indices, distances = ANN.queryAnnoyIndex(annoyIndex, ANN.featureToVector(features[queryModel]), k=k+1)
+
+    y_true = [query.getClassFromPath(queryModel)] * k
+    y_pred = []
+    for index, distance in list(zip(indices, distances))[1:1 + k]: # to avoid the first: always you.
+        guess = query.getClassFromPath(ANN.getFileNameFromIndex(index, features))
+        y_pred.append(guess)
+
+    return y_true, y_pred
+
+    # return [v[1] for v in sorted(zip(indices, distances))] # FOR DISTANCES
+# Somewhere in ANN.py
+
+
+# NOW TODO, MAKE NOT JUST THIS PLOT BUT ALSO THE MEAN AVERAGE PRECISION
+def classifySortedNeighboursDR(queryModel, features, k, annoyIndex, X_embedded_10n):
+    index = ANN.getIndexFromFileName(queryModel, features)
+    indices, distances = ANN.queryAnnoyIndex(annoyIndex, X_embedded_10n[index], k=k+1)
+
+    y_true = [query.getClassFromPath(queryModel)] * k
+    y_pred = []
+    for index, distance in list(zip(indices, distances))[1:1 + k]: # to avoid the first: always you.
+        guess = query.getClassFromPath(ANN.getFileNameFromIndex(index, features))
+        y_pred.append(guess)
+
+    return y_true, y_pred
+
+
+
+
+def classifySortedNeighbours(queryModel, features, k):
     queryVector = features[queryModel]
     distances = [(query.getDistance(queryVector, features[meshPath]), meshPath) for meshPath in features]
     sortedDistances = sorted(distances, key=lambda tup: tup[0])
@@ -46,59 +82,89 @@ def classifySortedNeighbours(queryModel, features, k=10):
 
 # Then run this for all queryModels! And append the result in one big list.
 
-def calculateConfusionMatrix(features, k=10):
+class Alg(Enum):
+    default = 1
+    ann     = 2
+    dr      = 3
+
+def calculateConfusionMatrix(features, k=10, alg=Alg.default):
     # for feature in features
     # set this to queryModel and run classify
     y_true = []
     y_pred = []
-    for queryModel in features.keys():
-        # TODO is features a... dict? To run based on a path? Yes!
-        # queryModel e.g. = "models_final\\Airplane\\64.off"
-        # Just somehow get all paths, or... get all KEYS from the json! Then, run for all.
 
-        yt, yp = classifySortedNeighbours(queryModel, features, k)
-        y_true.append(yt)
-        y_pred.append(yp)
+    # TODO is features a... dict? To run based on a path? Yes!
+    # queryModel e.g. = "models_final\\Airplane\\64.off"
+    # Just somehow get all paths, or... get all KEYS from the json! Then, run for all.
+
+    if alg == Alg.default:
+        for queryModel in features.keys():
+            yt, yp = classifySortedNeighbours(queryModel, features, k)
+            y_true.append(yt)
+            y_pred.append(yp)
+    elif alg == Alg.ann:
+        data = [ANN.featureToVector(feature) for feature in features.values()]
+        annoyIndex = ANN.createAnnoyIndex(data)
+        for queryModel in features.keys():
+            yt, yp = classifySortedNeighboursANN(queryModel, features, k, annoyIndex)
+            y_true.append(yt)
+            y_pred.append(yp)
+    elif alg == Alg.dr:
+        allData = [ANN.featureToVector(features[filename]) for filename in features]
+        data = np.array(allData)
+        classes = [query.getClassFromPath(path) for path in features]
+        dimensions = 2
+        X_embedded_10n = DR.createTSNEObject(data, dimensions)
+        annoyIndex = ANN.createAnnoyIndex(X_embedded_10n, dimensions)
+        for queryModel in features.keys():
+            yt, yp = classifySortedNeighboursDR(queryModel, features, k, annoyIndex, X_embedded_10n)
+            y_true.append(yt)
+            y_pred.append(yp)
+
     y_true = [i for sublist in y_true for i in sublist]
     y_pred = [i for sublist in y_pred for i in sublist]
     return y_true, y_pred
 
 
 def main():
-    # with open("./database/normalized_features.json", "r") as read_content:
-    #     features = json.load(read_content)
-    # y_true, y_pred = calculateConfusionMatrix(features, k=19)
-    # labels = []
-    # [labels.append(x) for x in y_true if x not in labels]
-    # array = confusion_matrix(y_true, y_pred, labels=labels) # preferably y_true if all occur
-    # s = sum(array[0]) # the index doesn't matter - all sum the same == 20*k
-    # normalized_array = [[round(c*100/s) for c in row] for row in array]
+    with open("./database/normalized_features.json", "r") as read_content:
+        features = json.load(read_content)
+
+    alg = Alg.dr
+    k   = 19
+
+    y_true, y_pred = calculateConfusionMatrix(features, k=k, alg=alg)
+    labels = []
+    [labels.append(x) for x in y_true if x not in labels]
+    array = confusion_matrix(y_true, y_pred, labels=labels) # preferably y_true if all occur
+    s = sum(array[0]) # the index doesn't matter - all sum the same == 20*k
+    normalized_array = [[round(c*100/s) for c in row] for row in array]
 
     # this, to give a percentage or "acuracy". Is what Alex wanted, makes sense too - easier to interpret
     # note: only the rows or y-axis (y_real) sum to 200. The x-axis (y_pred) can sum to any number, as we can predict any class as much as desired
 
 
     # for k=19, round:
-    normalized_array = [[57, 17, 0, 3, 6, 0, 1, 7, 1, 0, 0, 1, 0, 7, 0, 0, 0, 0, 1],
-    [7, 42, 0, 19, 7, 0, 0, 0, 0, 0, 0, 2, 0, 7, 0, 1, 0, 1, 14],
-    [9, 0, 28, 1, 13, 0, 1, 9, 17, 0, 0, 0, 2, 15, 0, 1, 2, 2, 1],
-    [3, 19, 0, 17, 6, 0, 4, 0, 0, 7, 1, 9, 2, 3, 0, 4, 0, 7, 19],
-    [7, 13, 0, 4, 29, 0, 1, 7, 0, 0, 0, 3, 1, 6, 0, 1, 0, 24, 3],
-    [0, 0, 0, 0, 0, 57, 0, 0, 0, 0, 6, 0, 0, 0, 15, 0, 22, 0, 0],
-    [2, 6, 0, 11, 3, 0, 14, 0, 1, 9, 0, 18, 2, 8, 2, 12, 1, 4, 8],
-    [17, 0, 3, 0, 15, 0, 0, 58, 1, 0, 0, 0, 1, 3, 0, 0, 0, 0, 0],
-    [7, 2, 7, 3, 0, 0, 2, 6, 40, 2, 0, 5, 6, 8, 1, 7, 3, 0, 1],
-    [0, 0, 0, 5, 0, 0, 6, 0, 0, 52, 4, 18, 1, 0, 8, 0, 0, 0, 7],
-    [0, 1, 0, 5, 1, 10, 4, 0, 0, 17, 24, 7, 1, 1, 18, 1, 4, 2, 4],
-    [0, 2, 0, 10, 3, 0, 12, 0, 1, 18, 2, 27, 1, 2, 4, 7, 1, 5, 4],
-    [1, 9, 3, 8, 14, 0, 1, 6, 2, 9, 2, 6, 17, 5, 2, 1, 0, 7, 7],
-    [9, 11, 5, 6, 12, 0, 3, 4, 2, 0, 0, 6, 2, 24, 0, 3, 0, 6, 6],
-    [0, 0, 0, 1, 0, 13, 3, 0, 0, 18, 10, 9, 2, 0, 29, 0, 13, 0, 1],
-    [0, 2, 0, 9, 1, 0, 9, 0, 1, 0, 0, 10, 1, 5, 0, 59, 0, 1, 3],
-    [0, 0, 1, 0, 0, 19, 1, 0, 4, 0, 2, 2, 1, 1, 16, 0, 54, 0, 0],
-    [0, 2, 0, 8, 27, 0, 2, 0, 0, 1, 1, 6, 2, 3, 0, 0, 0, 42, 6],
-    [1, 18, 0, 20, 2, 0, 3, 0, 0, 7, 1, 6, 0, 5, 1, 2, 0, 3, 30]]
-    labels = ['Airplane', 'Ant', 'Glasses', 'Hand', 'Human', 'Mech', 'Octopus', 'Plier', 'Table', 'Teddy', 'Vase', 'Armadillo', 'Bearing', 'Bird', 'Bust', 'Chair', 'Cup', 'Fish', 'FourLeg']
+    # normalized_array = [[57, 17, 0, 3, 6, 0, 1, 7, 1, 0, 0, 1, 0, 7, 0, 0, 0, 0, 1],
+    # [7, 42, 0, 19, 7, 0, 0, 0, 0, 0, 0, 2, 0, 7, 0, 1, 0, 1, 14],
+    # [9, 0, 28, 1, 13, 0, 1, 9, 17, 0, 0, 0, 2, 15, 0, 1, 2, 2, 1],
+    # [3, 19, 0, 17, 6, 0, 4, 0, 0, 7, 1, 9, 2, 3, 0, 4, 0, 7, 19],
+    # [7, 13, 0, 4, 29, 0, 1, 7, 0, 0, 0, 3, 1, 6, 0, 1, 0, 24, 3],
+    # [0, 0, 0, 0, 0, 57, 0, 0, 0, 0, 6, 0, 0, 0, 15, 0, 22, 0, 0],
+    # [2, 6, 0, 11, 3, 0, 14, 0, 1, 9, 0, 18, 2, 8, 2, 12, 1, 4, 8],
+    # [17, 0, 3, 0, 15, 0, 0, 58, 1, 0, 0, 0, 1, 3, 0, 0, 0, 0, 0],
+    # [7, 2, 7, 3, 0, 0, 2, 6, 40, 2, 0, 5, 6, 8, 1, 7, 3, 0, 1],
+    # [0, 0, 0, 5, 0, 0, 6, 0, 0, 52, 4, 18, 1, 0, 8, 0, 0, 0, 7],
+    # [0, 1, 0, 5, 1, 10, 4, 0, 0, 17, 24, 7, 1, 1, 18, 1, 4, 2, 4],
+    # [0, 2, 0, 10, 3, 0, 12, 0, 1, 18, 2, 27, 1, 2, 4, 7, 1, 5, 4],
+    # [1, 9, 3, 8, 14, 0, 1, 6, 2, 9, 2, 6, 17, 5, 2, 1, 0, 7, 7],
+    # [9, 11, 5, 6, 12, 0, 3, 4, 2, 0, 0, 6, 2, 24, 0, 3, 0, 6, 6],
+    # [0, 0, 0, 1, 0, 13, 3, 0, 0, 18, 10, 9, 2, 0, 29, 0, 13, 0, 1],
+    # [0, 2, 0, 9, 1, 0, 9, 0, 1, 0, 0, 10, 1, 5, 0, 59, 0, 1, 3],
+    # [0, 0, 1, 0, 0, 19, 1, 0, 4, 0, 2, 2, 1, 1, 16, 0, 54, 0, 0],
+    # [0, 2, 0, 8, 27, 0, 2, 0, 0, 1, 1, 6, 2, 3, 0, 0, 0, 42, 6],
+    # [1, 18, 0, 20, 2, 0, 3, 0, 0, 7, 1, 6, 0, 5, 1, 2, 0, 3, 30]]
+    # labels = ['Airplane', 'Ant', 'Glasses', 'Hand', 'Human', 'Mech', 'Octopus', 'Plier', 'Table', 'Teddy', 'Vase', 'Armadillo', 'Bearing', 'Bird', 'Bust', 'Chair', 'Cup', 'Fish', 'FourLeg']
 
     labelsize = 0.6
     size = 8
