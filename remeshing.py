@@ -1,31 +1,22 @@
-import os                         # paths: for getting the files
+
+
+# This file applies Remeshing for each model.
+
+
+import os
 import pymeshlab
+import math
 ms = pymeshlab.MeshSet()
 
-import math
-
 import histograms as hist
-import csv_file
 
-# Step 2.1: Analyzing a single shape
-# Start building a simple filter that checks all shapes in the database. The filter should output, for each shape
-    # the class of the shape
-    # the number of faces and vertices of the shape
-    # the type of faces (e.g. only triangles, only quads, mixes of triangles and quads)
-    # the axis-aligned 3D bounding box of the shapes
-# Shape class: All shapes in the Princeton and Labeled PSB Datasets come with a class label.
-# For the Labeled PSB database, use the classification which divides shapes into 19 classes (aircraft, animal, etc).
-
-# Step 2.2: Statistics over the whole database
-# Use the output of the filter, e.g. saved in an Excel sheet or CSV file, to find out
-    # (a) what is the average shape in the database (in terms of vertex and face counts); and
-    # (b) if there are significant outliers from this average (e.g. shapes having many, or few, vertices or cells).
-# The best way to do this is to show a histogram counting how many shapes are in the database for every range of the property of interest (e.g., number of vertices, number of faces, shape class).
 
 # https://pymeshlab.readthedocs.io/en/latest/filter_list.html
 # For what a mesh all contains.
 
-# e.g. original_folder='\labeledDb', remesh_folder='models_remesh'
+
+# This does the remeshing. Given all meshes in 'original_folder', remesh them using pre-set parameters
+# and save all meshes in 'remesh_folder'.
 def remesh(original_folder, remesh_folder):
     all_paths = hist.getAllPaths(original_folder)
     # this gets all the full paths leading to an .off file within a folder.
@@ -36,31 +27,29 @@ def remesh(original_folder, remesh_folder):
     # empty remeshpath if existing, or create if not
     remeshpath = os.getcwd() + '\\' + remesh_folder
     if os.path.exists(remeshpath):
-        print("Cannot put remeshes in existing folder. Afraid of messing everything up.")
+        print("Cannot put remeshes in existing folder. Afraid of accidental overwriting.")
         return
     os.mkdir(remeshpath)
 
-    printeach = math.floor(math.sqrt(len(all_paths)))
+    printeach = math.floor(math.sqrt(len(all_paths))) # solely used for progress-report.
 
     for i in range(len(all_paths)):
         path = all_paths[i]
 
-        ms.clear() # to make sure we don't apply the filter to all previous meshes too
+        ms.clear() # to make sure we don't apply the filter to all previous meshes again
         ms.load_new_mesh(path)
         m = ms.current_mesh()
 
-        filename   = os.path.basename(path)
+        filename   = os.path.basename(path)                  # the file-name, e.g. "001.off"
         foldername = os.path.basename(os.path.dirname(path)) # the folder-name, e.g. "Airplane"
         newpath    = remeshpath + '\\' + foldername
         
         # if the folder doesn't exist yet, create it
-        if not os.path.exists(newpath):
+        if not os.path.exists(newpath): # this is to put each model back in its original class-folder
             os.mkdir(newpath)
 
         vertices_before.append(m.vertex_number())
         ms.apply_filter('meshing_isotropic_explicit_remeshing', iterations=3, targetlen=pymeshlab.Percentage(1.5))
-        # while m.vertex_number() > 5000:
-        #     ms.apply_filter('meshing_decimation_clustering', threshold=pymeshlab.Percentage(1.5))
         vertices_after.append(m.vertex_number())
 
         ms.save_current_mesh(newpath + '\\' + filename)
@@ -68,13 +57,19 @@ def remesh(original_folder, remesh_folder):
         if i % printeach == 0:
             print(f"First {i} done")
 
-    # Now make a histogram.
+    # Note: these histograms were solely used to quickly check the immediate results.
+    # for the advanced histograms used in the report, see 'histogramPlotting.py' 'plotVertices' function.
     hist.make_histogram(vertices_before, 'Vertices before remeshing', 'Frequency')
     hist.make_histogram(vertices_after,  'Vertices after remeshing',  'Frequency')
-    # We can always make these histograms afterwards, without having to do this all again.
-    # That's why we save the models! Just read them from file and print it. Way quicker.
 
 
+
+if __name__ == "__main__":
+    remesh(r'\labeledDB', r'\models_remesh')
+
+
+
+# temporary function to print how many of the models have their vertices within a certain range
 def printVertices(folder):
     all_paths = hist.getAllPaths(folder)
     # this gets all the full paths leading to an .off file within a folder.
@@ -83,30 +78,11 @@ def printVertices(folder):
     for path in all_paths:
         ms.load_new_mesh(path)
         m = ms.current_mesh()
-        if m.vertex_number() <= 5000:
+        if m.vertex_number() <= 5000 and m.vertex_number() >= 1000:
             vertice_inrange += 1
     print(vertice_inrange / len(all_paths))
 
-
-# TEMPORARY TRY FUNCTION, TRIES OUT MULTIPLE VALUES TO SEE WHICH ONE IS BEST
-def tryDecimate():
-
-    # DECIMATING
-    models = csv_file.read_csv()
-    vertices_before = [row[1] for row in models]
-
-    for i in range(1,5):
-        vertices_after  = []
-
-        for model in models:
-            if model[1] > 6000: # only try decimate on > 6000 vertices
-                v = 1.5 + (1.5/5)*i # 0.3, 0.6, 0.9, 1.2, 1.5
-                ms.clear()
-                ms.load_new_mesh(os.getcwd() + model[-1])
-                m = ms.current_mesh()
-                # vertices_before.append(m.vertex_number())
-                ms.apply_filter('meshing_decimation_clustering', threshold=pymeshlab.Percentage(v))
-                vertices_after.append(m.vertex_number())
-
-        hist.make_histogram(vertices_before, 'Vertices before decimation', 'Frequency')
-        hist.make_histogram(vertices_after,  f'Vertices after decimation, threshold = {v}', 'Frequency')
+# >>> printVertices('\labeledDB')
+# 0.16842105263157894
+# >>> printVertices('\models_remesh')
+# 0.8
