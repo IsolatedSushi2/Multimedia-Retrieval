@@ -1,21 +1,22 @@
-import json 
-import pandas
-from FeatureExtractor import extractFeatures
+import matplotlib.pyplot as plt
 
-# Opening JSON file
-with open('./BinnedHistValues/binnedHistValues.json',) as f:
-    # returns JSON object as 
-    # a dictionary
-    binnedDatadata = json.load(f)
+# Need to create as global variable so our callback(on_plot_hover) can access
+fig = plt.figure()
+plot = fig.add_subplot(111)
 
-featureVectors = pandas.read_csv('./database/features.csv', index_col=[0])
+# create some curves
+for i in range(4):
+    # Giving unique ids to each data member
+    plot.plot(
+        [i*1,i*2,i*3,i*4],
+        gid=i)
 
-featureDict = {}
-
-for row in binnedDatadata:
-    featureDict[row["path"]] = {"d1": row["d1"], "d2": row["d2"], "d3": row["d3"], "d4": row["d4"], "a3": row["a3"]}
-    featureDict[row["path"]] = {**extractFeatures(row["path"]), **featureDict[row["path"]]}
-    print(row["path"])
-
-with open('result.json', 'w') as fp:
-    json.dump(featureDict, fp)
+def on_plot_hover(event):
+    # Iterating over each data member plotted
+    for curve in plot.get_lines():
+        # Searching which data member corresponds to current mouse position
+        if curve.contains(event)[0]:
+            print("over %s" % curve.get_gid())
+            
+fig.canvas.mpl_connect('motion_notify_event', on_plot_hover)           
+plt.show()
