@@ -8,7 +8,7 @@ from QueryProcessorDemo import *
 from ANNDemo import *
 from DRDemo import *
 
-
+#init global and local variables
 fileLocation = "unknown"
 init = True
 meshlist = []
@@ -17,16 +17,19 @@ X_embedded = None
 distanceMeasure = 'F'
 y = 1
 
+#tkinter code to get and set value
 def get_current_value():
     return '{: .2f}'.format(current_value.get())
 
-
+#Event that changes the value of the K-label
 def slider_changed(event):
     current_value_label.configure(text=('Current Value for K:', get_current_value()))
 
+#event that gets the new distance value (F,ANN,DR+ANN)
 def distValueUpdate(event):
     distmeasure.get()
 
+#code that sets the file location and starts at correct folder (models_final/)
 def addFile():
     global fileLocation
     fileLocation = filedialog.askopenfilename(initialdir="./models_final/", title="Select File",
@@ -34,39 +37,46 @@ def addFile():
     base_path = os.getcwd()
     fileLocation = os.path.relpath(fileLocation, base_path)
 
-
+#function that gets called on the RUN button
 def runApp():
+    #global variables needed
     global init
     global meshlist
     global y
     global X_embedded
     global classes
+    global paths
     acc = 0
+    #error when you haven't selected a file print this
     if fileLocation == "unknown":
         print("error no file")
         mylist.insert(1, "error no file selected")
     else:
+        #print some stuff in the GUI terminal
         curval = current_value.get()
         FileboolVal = Filebool.get()
         print("running on: ", fileLocation)
         print("current K = ", curval)
         mylist.insert((1+(y*100)-1), ("running On file", fileLocation, "with current K = ", curval))
+        #run F, ANN , DR + ANN functions accoridng to the distmeasure setting
         if distmeasure.get() == 'F':    
             guesslist, acc, meshlist = mainProcess(fileLocation, curval, FileboolVal)
         elif distmeasure.get() == 'ANN':
             guesslist, acc, meshlist = ANNProcess(fileLocation, curval, FileboolVal)
         elif distmeasure.get() == 'DR + ANN':
-            guesslist, acc, meshlist, X_embedded, classes = DRDemo(fileLocation, curval)
+            guesslist, acc, meshlist, X_embedded, classes, paths = DRDemo(fileLocation, curval)
         else:
             print("Something weird happend")
+        #print all values found in the guesslist (list off guessed meshes)
         for x in range(len(guesslist)):
             mylist.insert((x+1+(y*100)), guesslist[x])
+        #print acc and sugarlines to keep reuslts seperated.
         mylist.insert((x+1+(y*100)+19), ("Accuracy: ", acc))
         mylist.insert((x+1+(y*100)+20),"=====================================")
         y+=1
         
         
-    
+#runs the Open3D file or gives error when no meshes are found (meshlist is already nicely translated in the mainfunctions)
 def runO3d():
     global y
     if meshlist == []:
@@ -75,22 +85,24 @@ def runO3d():
     else:
         o3d.visualization.draw_geometries(meshlist)
 
+#runs the TSNE plot or gives error when no TSNE plot available.
 def runPlot():
     global y
     if classes is None:
         mylist.insert((y*100), "error no TSNE to plot RUN DR first")
         mylist.insert(((y*100)+1),"=====================================")
     else:
-        plotTSNE(X_embedded, classes)
+        plotTSNE(X_embedded, classes, paths)
 
 #the UI
 # root window
 root = tk.Tk()
 root.geometry('700x700')
 
-# slider current value
+# slider current value of K
 current_value = tk.IntVar()
 
+#open file , runnapp , o3dview , tsneplot buttons init:
 openFile = tk.Button(root, text="Open File", padx=25,
                     pady=5, fg="white", bg="black", anchor="s", command=addFile)
 
@@ -103,6 +115,7 @@ o3dView = tk.Button(root, text="3dView", padx=25,
 TsnePlot = tk.Button(root, text="TsnePlot", padx=25,
                     pady=5, fg="white", bg="black", anchor="s",command=runPlot)
 
+#Place the buttons on locations
 openFile.place(x=10,y=540)
 runAppBut.place(x=10, y=580)
 o3dView.place(x=10, y=620)
@@ -148,4 +161,5 @@ Filebool = tk.IntVar()
 Filebox = tk.Checkbutton(root, text='Read Vector from File (not on DR)',variable=Filebool, onvalue=1, offvalue=0)
 Filebox.place(x=10, y=150)
 
+#mainloop of GUI
 root.mainloop()

@@ -26,12 +26,15 @@ def featureToVector(feature):
 def queryAnnoyIndex(annoyIndex, vector, k=10):
     return annoyIndex.get_nns_by_vector(vector, k, include_distances=True)
 
+#gets the filenames (mesh locations) from index numbers
 def getFileNameFromIndex(index, features):
     return list(features.keys())[index]
 
+#gets the index numbers from filenames (mesh location)
 def getIndexFromFileName(filename, features):
     return list(features.keys()).index(filename)
 
+#prints the query results
 def printQueryResults(neighbours, features):
     indices, distances = neighbours
     fileNames = [getFileNameFromIndex(index, features) for index in indices]
