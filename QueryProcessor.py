@@ -3,7 +3,6 @@ import numpy as np
 import scipy
 from sklearn.neighbors import NearestNeighbors
 from termcolor import colored
-import random
 import time
 
 def getSortedNeighbours(queryModel, features, k=10):

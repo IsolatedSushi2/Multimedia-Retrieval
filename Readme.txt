@@ -1,15 +1,20 @@
-Overleaf:
-radretifyo@vusra.com
-Password
+This MRsystem can be run by simply running the Demo.py file. This file will represent the user with a small GUI. Please use the Meshes in the Models_final file (the standard map) for retrieval. When using a model that is not in this map please use Read Vector from File, this is cause the given filepath of meshes is being used in retrieval in the database. 
+
+There are also non Demo files and other files not used in the demo, These files where mostly used for tinkering, testing, checking, making minor adjustments or simply because we needed to plot stuff for the report.
+
+Dependencies needed for running the program: (pip installable)
+annoy,			pymeshlab
+matplotlib,		sklearn
+numpy,			json
+open3d,			os
+pandas,			colorcet
+seaborn,		scipy
 
 
-The .csv has format
-1) shapeclass, as string;
-2) vertex no., as int;
-3) face no., as int;
-4) boundingbox_x, as float;
-5) boundingbox_y, as float;
-6) boundingbox_z, as float;
-7) path-extension, as string.
-Note that "Is_triangle_or_quad" is not needed, as pymeshlab converts all to triangles implicitly anyway.
-For the path-extension, simply stand in the git repository and use os.getcwd() + path-extension to get the path to the model. os.getcwd() fetches the current path.
+
+This program is made for an assignment for Multimedia Retrieval, a master course given by prof. dr. Alexandru C. Telea at Utrecht University.
+
+Program made by students:
+Nick Schuitemaker 	stnr: 6259855
+Ben Veldhuijzen 	stnr: 5981778
+Simen van Herpt 	stnr: 5955106
