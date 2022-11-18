@@ -25,37 +25,13 @@ def extractFeatures(mesh_path):
     features["rectangularity"] = getApproximatedVolume(mesh) / mesh.get_axis_aligned_bounding_box().volume()
     features["diameter"] = getDiameter(mesh.vertices)
     features["eccentricity"] = getEccentricity(mesh)
-
-    # The 5 distribution features on N=100000
-    #num_samples = 100000
-    #points = np.array(mesh.sample_points_uniformly(number_of_points=num_samples).points)
-
-    # d1Values = getD1(points)
-    # d2Values = getD2(points)
-    # d3Values = getD3(points)
-    # d4Values = getD4(points)
-    # a3Values = getA3(points)
-
-    # histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(mesh_path), "d1": d1Values.tolist(), "d2": d2Values.tolist(), "d3": d3Values.tolist(), "d4": d4Values.tolist(), "a3": a3Values.tolist()}
-    #histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(mesh_path), "a3": a3Values.tolist()}
-    #histDict = {"path": str(mesh_path), "class": QueryProcessor.getClassFromPath(mesh_path)}
-
-    # features["d1"] = binned values
-    # features["d2"] = binned values
-    # features["d3"] = binned values
-    # features["d4"] = binned values
-    # features["a3"] = binned values
     return features
 
 # Get the distance to bary center (which was translated to 0,0,0)
-
-
 def getD1(points):
     return np.linalg.norm(points, axis=1)
 
 # Get the distance between 2 random points on mesh
-
-
 def getD2(points):
     # Generate n pairs
     randomPointPairs = np.array(
@@ -75,8 +51,6 @@ def getD3(points):
     return np.sqrt(0.5 * np.linalg.norm(crossProducts, axis=1))
 
 # https://stackoverflow.com/questions/9866452/calculate-volume-of-any-tetrahedron-given-4-points/9866530
-
-
 def getD4(points):
     randomPointPairs = np.array(
         [points[np.random.choice(points.shape[0], 4, replace=False)] for _ in points])
@@ -86,8 +60,6 @@ def getD4(points):
     return np.cbrt(np.abs(np.sum((randomPointPairs[:, 0, :] - randomPointPairs[:, 3, :]) * crossProducts, axis=1)) / 6)
 
 # https://stackoverflow.com/questions/1211212/how-to-calculate-an-angle-from-three-points
-
-
 def getA3(points):
     randomPointPairs = np.array(
         [points[np.random.choice(points.shape[0], 3, replace=False)] for _ in points])
@@ -143,25 +115,6 @@ if __name__ == "__main__":
     print(colored(f"Extracting features for {len(pathList)} meshes"))
     allFeatures = [extractFeatures(path) for path in pathList]  
     
-    '''
-    #multi-process Json-Creation of featurefactor
-    for i in range(int(380/20)):
-        print("start met stap i =" , i)
-        pool = mp.Pool()
-        allFeatures = []
-        #new file every 20 meshes (inbetween saving vs crashes / other nasty interrupts.)
-        copyPath = pathList[(i*20):((i+1)*20)]
-        for path in copyPath:
-            pool.apply_async(extractFeatures, args=(path,), callback = log_result)
-        pool.close()
-        pool.join()
-        fileloc = "./database/Rectangularity" + str(i) + ".json"
-    '''
     with open("./database/Scalars", 'w') as f:
         json.dump(allFeatures, f)
     
-#commented out the dataframe panda since this wont be used just yet
-'''       
-    dataFrame = pandas.DataFrame(allFeatures, index=pathList)
-    dataFrame.to_csv("./database/features.csv")
-'''
