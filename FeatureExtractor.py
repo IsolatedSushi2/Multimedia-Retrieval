@@ -85,7 +85,7 @@ def getCompactness(surface, volume):
 
 
 def getApproximatedVolume(mesh):
-    tetraVolumes = [getTetraVolumeFromFace(face, mesh) for face in np.asarray(mesh.triangles)]#doesn't work???
+    tetraVolumes = [getTetraVolumeFromFace(face, mesh) for face in np.asarray(mesh.triangles)]
     return np.sum(tetraVolumes)
 
 
