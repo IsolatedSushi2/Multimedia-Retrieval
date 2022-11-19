@@ -97,7 +97,7 @@ def TryValues():
 
 # this plots the ranges of the scalar-features
 def plotScalarRanges():
-    with open("./database/result.json", "r") as read_content:
+    with open("./database/result_scalars.json", "r") as read_content:
         features = json.load(read_content)
     
     feature_names = ['surfaceArea', 'compactness', 'rectangularity', 'diameter', 'eccentricity']

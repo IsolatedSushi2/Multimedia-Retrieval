@@ -10,6 +10,23 @@ import DimensionReduction as DR
 import numpy as np
 import json
 from enum import Enum
+from functools import reduce
+from random import shuffle
+
+# this gets the Average Precision given a queryModel path and a list of classes in ascending order of distance.
+def getAP(y_true, sortedClasses):
+    tp       = 0   # True Positives so far. For each added k, the tp only changes by at most 1
+    avg_prec = 0
+    no_of_k  = len(sortedClasses)-1
+
+    # This calculates: 1/(no_of_k) * sum over k: [precision for k]
+    for k in range(1,no_of_k): # SUM OVER K
+        y_pred = sortedClasses[k+1] # +1 to avoid the first: always you.
+        if y_pred == y_true:
+            tp += 1
+        precision = tp / k     # TP / (TP+FP)
+        avg_prec += precision
+    return avg_prec / no_of_k
 
 
 # returns for ANN the average precision over all values of k, for a given queryModel.
@@ -17,22 +34,9 @@ def classifySortedNeighboursANN(queryModel, features, annoyIndex):
     indices, distances = ANN.queryAnnoyIndex(annoyIndex, ANN.featureToVector(features[queryModel]), k=len(features))
     distances = [(d, ANN.getFileNameFromIndex(i, features)) for (i,d) in list(zip(indices, distances))]
     sortedDistances = sorted(distances, key=lambda tup: tup[0])
-
+    sortedClasses = [query.getClassFromPath(i[1]) for i in sortedDistances]
     y_true = query.getClassFromPath(queryModel)
-    
-    tp       = 0   # True Positives so far. For each added k, the tp only changes by at most 1
-    avg_prec = 0
-    no_of_k  = len(sortedDistances)-1
-
-    # This calculates: 1/(no_of_k) * sum over k: [precision for k]
-    for k in range(1,no_of_k): # SUM OVER K
-        distance, path = sortedDistances[k+1] # +1 to avoid the first: always you.
-        y_pred = query.getClassFromPath(path)
-        if y_pred == y_true:
-            tp += 1
-        precision = tp / k     # TP / (TP+FP)
-        avg_prec += precision
-    return avg_prec / no_of_k
+    return getAP(y_true, sortedClasses)
 
 
 # returns for DR the average precision over all values of k, for a given queryModel.
@@ -41,47 +45,20 @@ def classifySortedNeighboursDR(queryModel, features, annoyIndex, X_embedded_10n)
     indices, distances = ANN.queryAnnoyIndex(annoyIndex, X_embedded_10n[index], k=len(features)) # contains (index, distance)
     distances = [(d, ANN.getFileNameFromIndex(i, features)) for (i,d) in list(zip(indices, distances))]
     sortedDistances = sorted(distances, key=lambda tup: tup[0])
-    
+    sortedClasses = [query.getClassFromPath(i[1]) for i in sortedDistances]
     y_true = query.getClassFromPath(queryModel)
-    
-    tp       = 0   # True Positives so far. For each added k, the tp only changes by at most 1
-    avg_prec = 0
-    no_of_k  = len(sortedDistances)-1
-
-    # This calculates: 1/(no_of_k) * sum over k: [precision for k]
-    for k in range(1,no_of_k): # SUM OVER K
-        distance, path = sortedDistances[k+1] # +1 to avoid the first: always you.
-        y_pred = query.getClassFromPath(path)
-        if y_pred == y_true:
-            tp += 1
-        precision = tp / k     # TP / (TP+FP)
-        avg_prec += precision
-    return avg_prec / no_of_k
-
+    return getAP(y_true, sortedClasses)
 
 
 def classifySortedNeighbours(queryModel, features):
     queryVector = features[queryModel]
     distances = [(query.getDistance(queryVector, features[meshPath]), meshPath) for meshPath in features]
     sortedDistances = sorted(distances, key=lambda tup: tup[0])
-
+    sortedClasses = [query.getClassFromPath(i[1]) for i in sortedDistances]
     y_true = query.getClassFromPath(queryModel)
-    
-    tp       = 0   # True Positives so far. For each added k, the tp only changes by at most 1
-    avg_prec = 0
-    no_of_k  = len(sortedDistances)-1
-
-    # This calculates: 1/(no_of_k) * sum over k: [precision for k]
-    for k in range(1,no_of_k): # SUM OVER K
-        distance, path = sortedDistances[k+1] # +1 to avoid the first: always you.
-        y_pred = query.getClassFromPath(path)
-        if y_pred == y_true:
-            tp += 1
-        precision = tp / k     # TP / (TP+FP)
-        avg_prec += precision
-    return avg_prec / no_of_k
-
+    return getAP(y_true, sortedClasses)
 # Then run this for all queryModels! And append the result in one big list.
+
 
 class Alg(Enum):
     default = 1
@@ -101,14 +78,14 @@ def calculateMAP(features, alg=Alg.default):
         for queryModel in features.keys():  # SUM OVER MODELS
             avg_prec = classifySortedNeighbours(queryModel, features)
             mean_avg_prec += avg_prec
-            print(avg_prec, " average precision.")
+            # print(avg_prec, " average precision.")
     elif alg == Alg.ann:
         data = [ANN.featureToVector(feature) for feature in features.values()]
         annoyIndex = ANN.createAnnoyIndex(data)
         for queryModel in features.keys():  # SUM OVER MODELS
             avg_prec = classifySortedNeighboursANN(queryModel, features, annoyIndex)
             mean_avg_prec += avg_prec
-            print(avg_prec, " average precision.")
+            # print(avg_prec, " average precision.")
     elif alg == Alg.dr:
         allData = [ANN.featureToVector(features[filename]) for filename in features]
         data = np.array(allData)
@@ -120,7 +97,7 @@ def calculateMAP(features, alg=Alg.default):
         for queryModel in features.keys():  # SUM OVER MODELS
             avg_prec = classifySortedNeighboursDR(queryModel, features, annoyIndex, X_embedded_10n)
             mean_avg_prec += avg_prec
-            print(avg_prec, " average precision.")
+            # print(avg_prec, " average precision.")
 
     return mean_avg_prec / no_of_models
 
@@ -131,8 +108,29 @@ def main():
         features = json.load(read_content)
 
     alg = Alg.ann
+
     _map = calculateMAP(features, alg=alg)
     print("MeanAveragePrecision: ", _map)
+
+if __name__ == "__main__":
+    main()
+
+# returns the MAP score for a system returning random models.
+def getRandomMAP():
+    runs = 100
+    averagedMAP = 0
+    for run in range(runs):
+        mean_avg_prec = 0
+        results = reduce(lambda x,y: x+y, [[i]*20 for i in range(19)]) # 20*[0] + 20*[1] + ... + 20*[19]
+        for i in results:
+            randomResults = reduce(lambda x,y: x+y, [[i]*20 for i in range(19)])
+            shuffle(randomResults)
+            avg_prec = getAP(i, randomResults)
+            mean_avg_prec += avg_prec
+        print(run, mean_avg_prec / len(results))
+        averagedMAP += mean_avg_prec / len(results)
+    print()
+    return averagedMAP / runs
 
 
 # Speed up trick: we can compute it for every k simultaniously.
@@ -140,10 +138,6 @@ def main():
 
 # Originally:  1/(no_of_k) * sum over all k: [1/(no_of_models) * sum over all models: [precision]]
 # Which is decomposable as: 1/(no_of_k * no_of_models) * sum over all models: [sum over all k: [precision]]
-
-
-if __name__ == "__main__":
-    main()
 
 
 

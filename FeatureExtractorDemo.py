@@ -16,7 +16,7 @@ def extractFeatures(mesh_path):
 
 
     #normalize the scalar functions with respect to what's in the database so we read the current database
-    with open("./database/Scallers.json", "r") as read_content:
+    with open("./database/result_scalars.json", "r") as read_content:
         features = json.load(read_content)
 
     #quick featlen needed later for current feature after normalization
