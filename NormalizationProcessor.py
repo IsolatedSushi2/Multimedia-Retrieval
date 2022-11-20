@@ -3,10 +3,11 @@ import copy
 import numpy as np
 from pathlib import Path
 import random
+import math
 import matplotlib.pyplot as plt   # plots: for visualizing the data (e.g. histogram)
-from FeatureEx import distance, make_histogram, make_histogram_comparison
 import os
 import sys
+#from HistCompare import make_histogram, make_histogram_comparison
 
 #global variables
 beforehist = []
@@ -92,6 +93,14 @@ def processMesh(path, foldername):
     #beforehist.append(makeDistHist(mesh))
     #make disthist after
     #afterhist.append(makeDistHist(translated_mesh))
+
+# Function to find distance in 3d points
+def distance(x1, y1, z1, x2, y2, z2):
+      
+    d = math.sqrt(math.pow(x2 - x1, 2) +
+                math.pow(y2 - y1, 2) +
+                math.pow(z2 - z1, 2)* 1.0)
+    return d
 
 #makes the axis lines at (0,0,0) of coordinate system
 def processAxis():
