@@ -4,6 +4,8 @@ The ANN, and the DR + ANN are computed slowly. This is because we do not safe th
 
 There are also non Demo files and other files not used in the demo, These files where mostly used for tinkering, testing, checking, making minor adjustments or simply because we needed to plot stuff for the report.
 
+The used Shape Database can be found labeledDb map. In the models_final map you can see the shapes after preprocessing. The database folder contains json files of precomputed values needed for computations.
+
 Dependencies needed for running the program: (pip installable)
 annoy,			pymeshlab
 matplotlib,		sklearn
@@ -20,3 +22,5 @@ Program made by students:
 Nick Schuitemaker 	stnr: 6259855
 Ben Veldhuijzen 	stnr: 5981778
 Simen van Herpt 	stnr: 5955106
+
+github link: https://github.com/IsolatedSushi2/Multimedia-Retrieval
